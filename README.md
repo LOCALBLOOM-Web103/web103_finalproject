@@ -31,7 +31,7 @@ Users can dynamically filter local businesses and creative events by activity ty
 
 [gif goes here]
 
-### Interactive Detail View with Dynamic Routing
+### ✅ Interactive Detail View with Dynamic Routing
 
 Each business and event features a dedicated dynamic detail page showcasing operating hours, full address, pricing tiers, and an overview of upcoming workshops or supplies offered.
 
