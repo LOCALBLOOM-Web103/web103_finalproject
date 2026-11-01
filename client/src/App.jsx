@@ -1,4 +1,5 @@
 import { Link, Route, Routes } from 'react-router-dom'
+import Dashboard from './pages/Dashboard.jsx'
 import './App.css'
 
 function App() {
@@ -9,7 +10,7 @@ function App() {
       </header>
       <main>
         <Routes>
-          <Route path="/" element={<p className="status">Events are coming soon.</p>} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="*" element={<p className="status">Page not found.</p>} />
         </Routes>
       </main>
