@@ -45,3 +45,30 @@ main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 8px 0 0; }
 .tags li { font-size: 0.8rem; color: var(--muted); }
 
+.event-page { max-width: 760px; margin: 0 auto; }
+.event-page .back { display: inline-block; margin-bottom: 16px; }
+.event-page .hero { width: 100%; border-radius: 12px; aspect-ratio: 16 / 9; object-fit: cover; margin-bottom: 16px; }
+.event-page h1 { margin: 8px 0; }
+.event-page h2 { font-size: 1.1rem; margin-top: 24px; }
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 24px 0;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.details dt { font-weight: 600; color: var(--text-h); }
+.details dd { margin: 0; }
+.button {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
