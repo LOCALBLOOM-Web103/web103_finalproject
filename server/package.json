@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch --env-file-if-exists=.env server.js"
+    "dev": "node --watch --env-file-if-exists=.env server.js",
+    "reset": "node --env-file-if-exists=.env config/reset.js"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
   }
 }
