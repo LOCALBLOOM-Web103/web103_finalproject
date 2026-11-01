@@ -54,6 +54,9 @@ Each event belongs to one activity type and can carry multiple descriptive tags 
 Users can click on any event card in the catalog to launch a slide-out modal pane containing an instant snapshot of the business, its tags, and quick-action links without navigating away from the discovery view.
 
 [gif goes here]
+<img src='./client/src/assets/demo.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+
+https://imgur.com/a/uoApAau
 
 ### Owner Form & Input Data Validation
 
