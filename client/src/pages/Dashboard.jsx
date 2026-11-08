@@ -67,7 +67,7 @@ function Dashboard() {
       <div className="event-grid">
         {events.map((event) => (
           <Link to={`/events/${event.id}`} className="event-card" key={event.id}>
-            <img src={event.images[0]} alt="" />
+            {event.images[0] ? <img src={event.images[0]} alt="" /> : <div className="img-placeholder" aria-hidden="true">🌸</div>}
             <div className="event-card-body">
               <span className="pill">{event.activity_type}</span>
               <h2>{event.title}</h2>
