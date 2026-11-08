@@ -67,4 +67,53 @@ router.get('/:id', async (req, res) => {
   }
 })
 
+// Basic checks only; stricter validation (URLs, address format) is a separate issue
+function validateEvent(body) {
+  const { venue_id, activity_type_id, title, start_time, end_time, price = 0, tag_ids = [] } = body
+  if (!Number.isInteger(venue_id)) return 'venue_id must be an integer'
+  if (!Number.isInteger(activity_type_id)) return 'activity_type_id must be an integer'
+  if (typeof title !== 'string' || !title.trim()) return 'title is required'
+  const start = Date.parse(start_time)
+  const end = Date.parse(end_time)
+  if (Number.isNaN(start) || Number.isNaN(end)) return 'start_time and end_time must be valid dates'
+  if (end <= start) return 'end_time must be after start_time'
+  if (typeof price !== 'number' || !Number.isFinite(price) || price < 0) return 'price must be a number >= 0'
+  if (!Array.isArray(tag_ids) || !tag_ids.every(Number.isInteger)) return 'tag_ids must be an array of integers'
+  return null
+}
+
+// POST /api/events  body: { venue_id, activity_type_id, title, description, what_to_bring, start_time, end_time, price, tag_ids: [1, 2] }
+router.post('/', async (req, res) => {
+  const error = validateEvent(req.body ?? {})
+  if (error) return res.status(400).json({ error })
+
+  const { venue_id, activity_type_id, title, description = null, what_to_bring = null, start_time, end_time, price = 0, tag_ids = [] } = req.body
+  const client = await pool.connect()
+
+  try {
+    // Event row and its tag links succeed or fail together
+    await client.query('BEGIN')
+    const { rows: [{ id }] } = await client.query(
+      `INSERT INTO events (venue_id, activity_type_id, title, description, what_to_bring, start_time, end_time, price)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [venue_id, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price]
+    )
+    await client.query(
+      'INSERT INTO event_tags (event_id, tag_id) SELECT $1, unnest($2::int[])',
+      [id, [...new Set(tag_ids)]]
+    )
+    await client.query('COMMIT')
+
+    const { rows } = await pool.query(`${eventQuery} WHERE e.id = $1 GROUP BY e.id, v.id, a.id`, [id])
+    res.status(201).json(rows[0])
+  } catch (err) {
+    await client.query('ROLLBACK')
+    // 23503 = foreign key violation: venue, activity type, or tag id doesn't exist
+    if (err.code === '23503') return res.status(400).json({ error: `Unknown reference: ${err.detail}` })
+    res.status(500).json({ error: err.message })
+  } finally {
+    client.release()
+  }
+})
+
 export default router
