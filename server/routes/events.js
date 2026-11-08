@@ -116,4 +116,58 @@ router.post('/', async (req, res) => {
   }
 })
 
+// PUT /api/events/:id  full replace, same body as POST; tag_ids replaces the event's tags
+router.put('/:id', async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Event id must be an integer' })
+  const error = validateEvent(req.body ?? {})
+  if (error) return res.status(400).json({ error })
+
+  const { venue_id, activity_type_id, title, description = null, what_to_bring = null, start_time, end_time, price = 0, tag_ids = [] } = req.body
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    const { rowCount } = await client.query(
+      `UPDATE events SET venue_id = $2, activity_type_id = $3, title = $4, description = $5,
+         what_to_bring = $6, start_time = $7, end_time = $8, price = $9
+       WHERE id = $1`,
+      [id, venue_id, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price]
+    )
+    if (!rowCount) {
+      await client.query('ROLLBACK')
+      return res.status(404).json({ error: 'Event not found' })
+    }
+    await client.query('DELETE FROM event_tags WHERE event_id = $1', [id])
+    await client.query(
+      'INSERT INTO event_tags (event_id, tag_id) SELECT $1, unnest($2::int[])',
+      [id, [...new Set(tag_ids)]]
+    )
+    await client.query('COMMIT')
+
+    const { rows } = await pool.query(`${eventQuery} WHERE e.id = $1 GROUP BY e.id, v.id, a.id`, [id])
+    res.json(rows[0])
+  } catch (err) {
+    await client.query('ROLLBACK')
+    if (err.code === '23503') return res.status(400).json({ error: `Unknown reference: ${err.detail}` })
+    res.status(500).json({ error: err.message })
+  } finally {
+    client.release()
+  }
+})
+
+// DELETE /api/events/:id  event_tags and event_images rows go with it (ON DELETE CASCADE)
+router.delete('/:id', async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Event id must be an integer' })
+
+  try {
+    const { rowCount } = await pool.query('DELETE FROM events WHERE id = $1', [id])
+    if (!rowCount) return res.status(404).json({ error: 'Event not found' })
+    res.status(204).end()
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 export default router
