@@ -25,11 +25,13 @@ Backend: Node.js, Express.js, PostgreSQL, Render
 
 ## Features
 
-### Multi-Criteria Search & Filter
+### ✅ Multi-Criteria Search & Filter
 
 Users can dynamically filter local businesses and creative events by activity type, distance/radius, and budget tier ($ to $$$) without leaving the discovery dashboard.
 
-[gif goes here]
+*Completed in Milestone 4: filtering by activity type, budget tier, and tag. The distance/radius filter is planned for Milestone 5.*
+
+<img src='./client/src/assets/filter.gif' title='Search & Filter' width='' alt='Filtering the dashboard by activity type, budget tier, and tag' />
 
 ### ✅ Interactive Detail View with Dynamic Routing
 
@@ -37,17 +39,19 @@ Each business and event features a dedicated dynamic detail page showcasing oper
 
 [gif goes here]
 
-### Community Spot Submission & Management
+### ✅ Community Spot Submission & Management
 
 Business owners and event organizers have access to a dedicated management interface where they can register new events, edit existing details , and delete obsolete events or venue pages.
 
-[gif goes here]
+*Completed in Milestone 4: create, edit, and delete events. Venue pages are planned for a later milestone.*
 
-### Categorization & Tagging via Join Table
+<img src='./client/src/assets/create-edit-delete.gif' title='Event Submission & Management' width='' alt='Posting a new event, editing it, and deleting it' />
+
+### ✅ Categorization & Tagging via Join Table
 
 Each event belongs to one activity type and can carry multiple descriptive tags (linked through a join table), making cross-discipline events easily discoverable.
 
-[gif goes here]
+<img src='./client/src/assets/tags.gif' title='Tagging' width='' alt='Picking several tags on the event form and filtering the dashboard by tag' />
 
 ### Quick-View Slide-Out Modal
 
