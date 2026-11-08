@@ -16,9 +16,38 @@ const eventQuery = `
   LEFT JOIN tags t ON t.id = et.tag_id
 `
 
+// Keep in sync with priceTier() in client/src/format.js
+const tierRanges = {
+  free: 'e.price = 0',
+  '$': 'e.price > 0 AND e.price < 25',
+  '$$': 'e.price >= 25 AND e.price < 60',
+  '$$$': 'e.price >= 60'
+}
+
+// GET /api/events?activity_type=Workshop&tier=$$&tag=pottery (all optional, combined with AND)
 router.get('/', async (req, res) => {
+  const { activity_type, tier, tag } = req.query
+  const where = []
+  const params = []
+
+  if (tier !== undefined) {
+    if (!tierRanges[tier]) return res.status(400).json({ error: 'tier must be one of: free, $, $$, $$$' })
+    where.push(tierRanges[tier])
+  }
+  if (activity_type) {
+    params.push(activity_type)
+    where.push(`a.name = $${params.length}`)
+  }
+  if (tag) {
+    // Subquery so the matching event still returns all of its tags, not just the filtered one
+    params.push(tag)
+    where.push(`e.id IN (SELECT et2.event_id FROM event_tags et2 JOIN tags t2 ON t2.id = et2.tag_id WHERE t2.name = $${params.length})`)
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+
   try {
-    const { rows } = await pool.query(`${eventQuery} GROUP BY e.id, v.id, a.id ORDER BY e.start_time`)
+    const { rows } = await pool.query(`${eventQuery} ${whereSql} GROUP BY e.id, v.id, a.id ORDER BY e.start_time`, params)
     res.json(rows)
   } catch (err) {
     res.status(500).json({ error: err.message })
