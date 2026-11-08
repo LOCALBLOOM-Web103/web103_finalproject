@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 const getJson = (url) =>
   fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(new Error(`Request failed (${res.status})`))))
@@ -9,7 +9,31 @@ const emptyEvent = {
   price: '0', description: '', what_to_bring: '', tag_ids: []
 }
 
+// API timestamp -> "YYYY-MM-DDTHH:mm" in the browser's local time, the format datetime-local needs
+// ponytail: assumes browser and server share a timezone (true in dev); store timestamptz if deployed users span zones
+const toInputTime = (ts) => {
+  const d = new Date(ts)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// API event -> form state; the API returns tag names, the form tracks tag ids
+const toForm = (event, tags) => ({
+  title: event.title,
+  venue_id: String(event.venue_id),
+  activity_type_id: String(event.activity_type_id),
+  start_time: toInputTime(event.start_time),
+  end_time: toInputTime(event.end_time),
+  price: String(Number(event.price)),
+  description: event.description ?? '',
+  what_to_bring: event.what_to_bring ?? '',
+  tag_ids: tags.filter((t) => event.tags.includes(t.name)).map((t) => t.id)
+})
+
+// Used for both /events/new (create) and /events/:id/edit (edit)
 function EventForm() {
+  const { id } = useParams()
+  const isEdit = id !== undefined
   const navigate = useNavigate()
   const [form, setForm] = useState(emptyEvent)
   const [options, setOptions] = useState(null) // { venues, activityTypes, tags }
@@ -18,10 +42,16 @@ function EventForm() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    Promise.all([getJson('/api/venues'), getJson('/api/activity-types'), getJson('/api/tags')])
-      .then(([venues, activityTypes, tags]) => setOptions({ venues, activityTypes, tags }))
+    Promise.all([
+      getJson('/api/venues'), getJson('/api/activity-types'), getJson('/api/tags'),
+      isEdit ? getJson(`/api/events/${id}`) : null
+    ])
+      .then(([venues, activityTypes, tags, event]) => {
+        if (event) setForm(toForm(event, tags))
+        setOptions({ venues, activityTypes, tags })
+      })
       .catch((err) => setLoadError(err.message))
-  }, [])
+  }, [id, isEdit])
 
   const set = (name) => (e) => setForm({ ...form, [name]: e.target.value })
   const toggleTag = (id) => setForm({
@@ -37,8 +67,8 @@ function EventForm() {
     setSubmitError(null)
     try {
       // Selects and number inputs give strings; the API expects integers/numbers
-      const res = await fetch('/api/events', {
-        method: 'POST',
+      const res = await fetch(isEdit ? `/api/events/${id}` : '/api/events', {
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
@@ -56,13 +86,15 @@ function EventForm() {
     }
   }
 
-  if (loadError) return <p className="status">Couldn't load form options: {loadError}</p>
+  if (loadError) return <p className="status">Couldn't load the form: {loadError}. <Link to="/">Back to events</Link></p>
   if (!options) return <p className="status">Loading form…</p>
 
   return (
     <form className="event-form" onSubmit={handleSubmit}>
-      <Link to="/" className="back">← All events</Link>
-      <h1>Post a new event</h1>
+      {isEdit
+        ? <Link to={`/events/${id}`} className="back">← Back to event</Link>
+        : <Link to="/" className="back">← All events</Link>}
+      <h1>{isEdit ? 'Edit event' : 'Post a new event'}</h1>
 
       <label>
         Title
@@ -123,7 +155,7 @@ function EventForm() {
       </fieldset>
 
       {submitError && <p className="form-error" role="alert">{submitError}</p>}
-      <button type="submit" className="button" disabled={saving}>{saving ? 'Posting…' : 'Post event'}</button>
+      <button type="submit" className="button" disabled={saving}>{saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post event'}</button>
     </form>
   )
 }

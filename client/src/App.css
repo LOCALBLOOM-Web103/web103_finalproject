@@ -129,7 +129,25 @@ main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
 .tags li { font-size: 0.8rem; color: var(--muted); }
 
 .event-page { max-width: 760px; margin: 0 auto; }
-.event-page .back { display: inline-block; margin-bottom: 16px; }
+.event-page-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
+.event-actions { display: flex; gap: 8px; }
+.secondary-button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.secondary-button:hover { border-color: var(--accent); }
+.secondary-button.danger { color: var(--danger); }
+.secondary-button.danger:hover { border-color: var(--danger); }
+.secondary-button:disabled { opacity: 0.6; cursor: wait; }
+.event-page .form-error { margin: 0 0 16px; }
 .event-page .hero { width: 100%; border-radius: 12px; aspect-ratio: 16 / 9; object-fit: cover; margin-bottom: 16px; }
 .event-page h1 { margin: 8px 0; }
 .event-page h2 { font-size: 1.1rem; margin-top: 24px; }

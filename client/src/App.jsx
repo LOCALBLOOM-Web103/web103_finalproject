@@ -14,7 +14,9 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/events/new" element={<EventForm />} />
+          {/* Keys stop React reusing form state when switching between create and edit */}
+          <Route path="/events/new" element={<EventForm key="new" />} />
+          <Route path="/events/:id/edit" element={<EventForm key="edit" />} />
           <Route path="/events/:id" element={<EventPage />} />
           <Route path="*" element={<p className="status">Page not found.</p>} />
         </Routes>
