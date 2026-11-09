@@ -33,6 +33,9 @@ Users can dynamically filter local businesses and creative events by activity ty
 
 <img src='./client/src/assets/filter.gif' title='Search & Filter' width='' alt='Filtering the dashboard by activity type, budget tier, and tag' />
 
+https://imgur.com/a/v3j7l6c
+
+
 ### ✅ Interactive Detail View with Dynamic Routing
 
 Each business and event features a dedicated dynamic detail page showcasing operating hours, full address, pricing tiers, and an overview of upcoming workshops or supplies offered.
@@ -47,11 +50,16 @@ Business owners and event organizers have access to a dedicated management inter
 
 <img src='./client/src/assets/create-edit-delete.gif' title='Event Submission & Management' width='' alt='Posting a new event, editing it, and deleting it' />
 
+https://imgur.com/a/9ys2AFN
+
 ### ✅ Categorization & Tagging via Join Table
 
 Each event belongs to one activity type and can carry multiple descriptive tags (linked through a join table), making cross-discipline events easily discoverable.
 
 <img src='./client/src/assets/tags.gif' title='Tagging' width='' alt='Picking several tags on the event form and filtering the dashboard by tag' />
+
+https://imgur.com/a/DUk4xFQ
+
 
 ### Quick-View Slide-Out Modal
 
@@ -61,23 +69,6 @@ Users can click on any event card in the catalog to launch a slide-out modal pan
 <img src='./client/src/assets/demo.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
 
 https://imgur.com/a/uoApAau
-
-#### filter gif
-<img src='./client/src/assets/filter.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
-
-https://imgur.com/a/v3j7l6c
-
-#### create-edit-delete gif
-<img src='./client/src/assets/create-edit-delete.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
-
-https://imgur.com/a/9ys2AFN
-
-#### tags gif
-<img src='./client/src/assets/tags.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
-
-
-https://imgur.com/a/DUk4xFQ
-
 
 
 ### Owner Form & Input Data Validation
