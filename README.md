@@ -62,6 +62,24 @@ Users can click on any event card in the catalog to launch a slide-out modal pan
 
 https://imgur.com/a/uoApAau
 
+#### filter gif
+<img src='./client/src/assets/filter.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+
+https://imgur.com/a/v3j7l6c
+
+#### create-edit-delete gif
+<img src='./client/src/assets/create-edit-delete.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+
+https://imgur.com/a/9ys2AFN
+
+#### tags gif
+<img src='./client/src/assets/tags.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+
+
+https://imgur.com/a/DUk4xFQ
+
+
+
 ### Owner Form & Input Data Validation
 
 All submission and edit forms for organizers enforce strict client and server-side data validation before updating the database, requiring valid external URLs, structured address inputs, and standardized budget ranges.

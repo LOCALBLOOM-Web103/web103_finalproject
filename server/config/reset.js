@@ -1,4 +1,8 @@
-import { pool } from './database.js'
+import fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
+
+const dataFile = fileURLToPath(new URL('./data.json', import.meta.url))
+const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'))
 
 const schema = `
   DROP TABLE IF EXISTS event_images, event_tags, events, tags, activity_types, venues, users CASCADE;
@@ -59,56 +63,272 @@ const schema = `
   );
 `
 
-// Seed owners can't log in yet; real password hashes come with the auth issue
-const seed = `
-  INSERT INTO users (name, email, password_hash) VALUES
-    ('Maya Lin', 'maya@clayandcoffee.com', 'seed-no-login'),
-    ('Jordan Reyes', 'jordan@pageturner.com', 'seed-no-login'),
-    ('Sam Okafor', 'sam@fiberloft.com', 'seed-no-login');
+function validateData() {
+  const expected = {
+    users: 3,
+    venues: 4,
+    activity_types: 5,
+    tags: 10,
+    events: 8
+  }
 
-  INSERT INTO venues (owner_id, name, address, city, latitude, longitude, website_url, hours) VALUES
-    (1, 'Clay & Coffee Studio', '412 Valencia St', 'San Francisco', 37.7652, -122.4219, 'https://example.com/clay-and-coffee', 'Tue–Sun 10am–8pm'),
-    (2, 'Page Turner Books', '1830 Telegraph Ave', 'Oakland', 37.8085, -122.2700, 'https://example.com/page-turner', 'Daily 9am–9pm'),
-    (3, 'The Fiber Loft', '77 Main St', 'Berkeley', 37.8716, -122.2727, 'https://example.com/fiber-loft', 'Wed–Sat 11am–6pm'),
-    (1, 'Ink & Easel Supply Co.', '255 Divisadero St', 'San Francisco', 37.7721, -122.4374, 'https://example.com/ink-and-easel', 'Mon–Sat 10am–7pm');
+  for (const [name, count] of Object.entries(expected)) {
+    if (!Array.isArray(data[name]) || data[name].length !== count) {
+      throw new Error(`Invalid ${name}: expected ${count} records`)
+    }
+  }
 
-  INSERT INTO activity_types (name) VALUES ('Workshop'), ('Class'), ('Open Mic'), ('Market'), ('Meetup');
+  function idsFor(name) {
+    const ids = data[name].map(row => row.id)
 
-  INSERT INTO tags (name) VALUES
-    ('pottery'), ('beginner-friendly'), ('kid-friendly'), ('poetry'), ('knitting'),
-    ('painting'), ('materials included'), ('outdoor'), ('coffee'), ('books');
+    if (
+      ids.some(id => !Number.isSafeInteger(id) || id <= 0) ||
+      new Set(ids).size !== ids.length
+    ) {
+      throw new Error(`Invalid or duplicate IDs in ${name}`)
+    }
 
-  INSERT INTO events (venue_id, activity_type_id, title, description, what_to_bring, start_time, end_time, price) VALUES
-    (1, 1, 'Intro to Wheel Throwing', 'Learn to center clay and throw your first bowl on the wheel.', 'Clothes that can get messy', '2026-11-08 18:00', '2026-11-08 20:00', 45),
-    (1, 5, 'Sip & Sketch Morning', 'Casual drawing meetup over pour-over coffee.', 'A sketchbook and pencils', '2026-11-09 09:30', '2026-11-09 11:00', 0),
-    (2, 3, 'Poetry Open Mic Night', 'Sign up at the door and share up to five minutes of your work.', 'Your poems', '2026-11-12 19:00', '2026-11-12 21:30', 5),
-    (2, 5, 'Zine Swap & Book Club', 'Trade zines and discuss this month''s indie pick.', 'Zines to swap (optional)', '2026-11-15 14:00', '2026-11-15 16:00', 0),
-    (3, 2, 'Knitting for Absolute Beginners', 'Cast on, knit, purl, and bind off a small swatch.', 'Nothing — needles and yarn provided', '2026-11-10 17:30', '2026-11-10 19:30', 30),
-    (3, 4, 'Handmade Holiday Market', 'Local makers sell ceramics, prints, and knitwear.', 'A tote bag', '2026-12-06 10:00', '2026-12-06 16:00', 0),
-    (4, 1, 'Watercolor Landscapes', 'A guided four-hour watercolor session with a pro illustrator.', 'Nothing — paper and paints provided', '2026-11-14 12:00', '2026-11-14 16:00', 85),
-    (4, 2, 'Kids Painting Hour', 'Bright, messy painting fun for ages 5–10.', 'A smock or old t-shirt', '2026-11-16 10:00', '2026-11-16 11:00', 15);
+    return new Set(ids)
+  }
 
-  INSERT INTO event_tags (event_id, tag_id) VALUES
-    (1, 1), (1, 2), (1, 7),
-    (2, 6), (2, 9), (2, 2),
-    (3, 4), (3, 10),
-    (4, 10),
-    (5, 5), (5, 2), (5, 7),
-    (6, 1), (6, 5), (6, 8),
-    (7, 6), (7, 7),
-    (8, 6), (8, 3), (8, 2);
+  const users = idsFor('users')
+  const venues = idsFor('venues')
+  const types = idsFor('activity_types')
+  const tags = idsFor('tags')
+  idsFor('events')
 
-  INSERT INTO event_images (event_id, url, position)
-  SELECT id, 'https://picsum.photos/seed/localbloom-' || id || '/800/500', 0 FROM events;
-`
+  const requiredText = (value, label) => {
+    if (typeof value !== 'string' || !value.trim()) {
+      throw new Error(`Invalid text: ${label}`)
+    }
+  }
 
-try {
-  await pool.query(schema)
-  await pool.query(seed)
-  console.log('Database reset and seeded')
-} catch (err) {
-  console.error('Database reset failed:', err.message)
-  process.exitCode = 1
-} finally {
-  await pool.end()
+  for (const user of data.users) {
+    requiredText(user.name, 'user.name')
+    requiredText(user.email, 'user.email')
+    requiredText(user.password_hash, 'user.password_hash')
+  }
+
+  for (const venue of data.venues) {
+    if (!users.has(venue.owner_id)) {
+      throw new Error(`Invalid owner for venue ${venue.id}`)
+    }
+
+    requiredText(venue.name, 'venue.name')
+    requiredText(venue.address, 'venue.address')
+    requiredText(venue.city, 'venue.city')
+
+    if (
+      venue.latitude != null &&
+      (!Number.isFinite(Number(venue.latitude)) ||
+       Math.abs(Number(venue.latitude)) > 90)
+    ) {
+      throw new Error(`Invalid latitude for venue ${venue.id}`)
+    }
+
+    if (
+      venue.longitude != null &&
+      (!Number.isFinite(Number(venue.longitude)) ||
+       Math.abs(Number(venue.longitude)) > 180)
+    ) {
+      throw new Error(`Invalid longitude for venue ${venue.id}`)
+    }
+  }
+
+  for (const row of [...data.activity_types, ...data.tags]) {
+    requiredText(row.name, 'type/tag name')
+  }
+
+  let tagLinks = 0
+  let imageCount = 0
+
+  for (const event of data.events) {
+    if (!venues.has(event.venue_id)) {
+      throw new Error(`Invalid venue for event ${event.id}`)
+    }
+
+    if (!types.has(event.activity_type_id)) {
+      throw new Error(`Invalid activity type for event ${event.id}`)
+    }
+
+    requiredText(event.title, 'event.title')
+    requiredText(event.start_time, 'event.start_time')
+    requiredText(event.end_time, 'event.end_time')
+
+    if (
+      !Number.isFinite(Number(event.price)) ||
+      Number(event.price) < 0
+    ) {
+      throw new Error(`Invalid price for event ${event.id}`)
+    }
+
+    if (
+      !Array.isArray(event.tag_ids) ||
+      !Array.isArray(event.images)
+    ) {
+      throw new Error(`Invalid relationships for event ${event.id}`)
+    }
+
+    if (new Set(event.tag_ids).size !== event.tag_ids.length) {
+      throw new Error(`Duplicate tags for event ${event.id}`)
+    }
+
+    for (const tagId of event.tag_ids) {
+      if (!tags.has(tagId)) {
+        throw new Error(`Unknown tag ${tagId}`)
+      }
+    }
+
+    for (const image of event.images) {
+      requiredText(image.url, 'image.url')
+
+      if (!Number.isSafeInteger(image.position) || image.position < 0) {
+        throw new Error(`Invalid image position for event ${event.id}`)
+      }
+    }
+
+    tagLinks += event.tag_ids.length
+    imageCount += event.images.length
+  }
+
+  if (tagLinks !== 20 || imageCount !== 8) {
+    throw new Error('Unexpected event relationship counts')
+  }
+
+  console.log('Seed JSON validation passed.')
+  console.table({
+    users: data.users.length,
+    venues: data.venues.length,
+    activity_types: data.activity_types.length,
+    tags: data.tags.length,
+    events: data.events.length,
+    event_tags: tagLinks,
+    event_images: imageCount
+  })
 }
+
+async function insertRow(client, table, columns, values) {
+  const placeholders = values.map((_, i) => `$${i + 1}`).join(', ')
+  const sql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`
+  await client.query(sql, values)
+}
+
+async function seedDatabase(client) {
+  for (const user of data.users) {
+    await insertRow(client, 'users',
+      ['id', 'name', 'email', 'password_hash'],
+      [user.id, user.name, user.email, user.password_hash])
+  }
+
+  for (const venue of data.venues) {
+    await insertRow(client, 'venues',
+      ['id', 'owner_id', 'name', 'address', 'city',
+       'latitude', 'longitude', 'website_url', 'hours'],
+      [venue.id, venue.owner_id, venue.name, venue.address,
+       venue.city, venue.latitude, venue.longitude,
+       venue.website_url, venue.hours])
+  }
+
+  for (const type of data.activity_types) {
+    await insertRow(client, 'activity_types',
+      ['id', 'name'], [type.id, type.name])
+  }
+
+  for (const tag of data.tags) {
+    await insertRow(client, 'tags',
+      ['id', 'name'], [tag.id, tag.name])
+  }
+
+  for (const event of data.events) {
+    await insertRow(client, 'events',
+      ['id', 'venue_id', 'activity_type_id', 'title',
+       'description', 'what_to_bring', 'start_time',
+       'end_time', 'price'],
+      [event.id, event.venue_id, event.activity_type_id,
+       event.title, event.description, event.what_to_bring,
+       event.start_time, event.end_time, event.price])
+
+    for (const tagId of event.tag_ids) {
+      await insertRow(client, 'event_tags',
+        ['event_id', 'tag_id'], [event.id, tagId])
+    }
+
+    for (const image of event.images) {
+      await insertRow(client, 'event_images',
+        ['event_id', 'url', 'position'],
+        [event.id, image.url, image.position])
+    }
+  }
+
+  // Explicit IDs require synchronizing PostgreSQL SERIAL sequences.
+  for (const table of [
+    'users', 'venues', 'activity_types', 'tags', 'events'
+  ]) {
+    await client.query(`
+      SELECT setval(
+        pg_get_serial_sequence($1, 'id'),
+        (SELECT MAX(id) FROM ${table}),
+        true
+      )
+    `, [table])
+  }
+}
+
+async function main() {
+  validateData()
+
+  if (!process.argv.includes('--execute-reset')) {
+    console.log('Validation only. PostgreSQL was not accessed.')
+    console.log('No tables were dropped or modified.')
+    return
+  }
+
+  if (
+    process.env.LOCALBLOOM_CONFIRM_RESET !==
+    'DELETE_AND_RESEED_LOCALBLOOM'
+  ) {
+    throw new Error('Explicit reset confirmation is required.')
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Reset is blocked in production mode.')
+  }
+
+  const { pool } = await import('./database.js')
+  const client = await pool.connect()
+  let transactionStarted = false
+
+  try {
+    const identity = await client.query(`
+      SELECT current_database() AS database,
+             current_user AS username,
+             inet_server_addr() AS server_address
+    `)
+
+    console.table(identity.rows)
+
+    await client.query('BEGIN')
+    transactionStarted = true
+
+    await client.query(schema)
+    await seedDatabase(client)
+
+    await client.query('COMMIT')
+    transactionStarted = false
+
+    console.log('Database reset and seeded successfully.')
+  } catch (error) {
+    if (transactionStarted) {
+      await client.query('ROLLBACK')
+    }
+    throw error
+  } finally {
+    client.release()
+    await pool.end()
+  }
+}
+
+main().catch(error => {
+  console.error('Reset/validation failed:', error.message)
+  process.exitCode = 1
+})

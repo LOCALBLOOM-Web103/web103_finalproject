@@ -1,6 +1,44 @@
 import express from 'express'
 import { pool } from '../config/database.js'
 
+function validateImageUrl(imageUrl) {
+  if (imageUrl === undefined || imageUrl === null || imageUrl === '') return null
+  if (typeof imageUrl !== 'string') return 'Picture URL must be a string'
+
+  const value = imageUrl.trim()
+  if (!value) return null
+
+  try {
+    const parsed = new URL(value)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return 'Picture URL must start with https:// or http://'
+    }
+    if (!parsed.hostname) return 'Picture URL must contain a hostname'
+  } catch {
+    return 'Picture URL must be a valid URL'
+  }
+
+  return null
+}
+
+async function saveCoverImage(client, eventId, imageUrl) {
+  if (imageUrl === undefined) return
+
+  const value = typeof imageUrl === 'string' ? imageUrl.trim() : ''
+
+  // Only manage the cover image. Preserve any gallery images.
+  await client.query(
+    'DELETE FROM event_images WHERE event_id = $1 AND position = 0',
+    [eventId]
+  )
+
+  if (value) {
+    await client.query(
+      'INSERT INTO event_images (event_id, url, position) VALUES ($1, $2, 0)',
+      [eventId, value]
+    )
+  }
+}
 const router = express.Router()
 
 const eventQuery = `
@@ -68,9 +106,106 @@ router.get('/:id', async (req, res) => {
 })
 
 // Basic checks only; stricter validation (URLs, address format) is a separate issue
+async function resolveVenueId(client, venueId, newVenue) {
+  if (newVenue == null) return venueId
+
+  // Development-only ownership until user authentication is implemented.
+  const owner = await client.query(
+    'SELECT id FROM users WHERE id = $1',
+    [1]
+  )
+
+  if (!owner.rowCount) {
+    throw new Error('Development venue owner (user 1) does not exist')
+  }
+
+  const name = newVenue.name.trim()
+  const address = `${newVenue.address.trim()}, ${newVenue.state}${newVenue.zip_code ? ` ${newVenue.zip_code}` : ''}`
+  const city = newVenue.city.trim()
+
+  // Serialize venue creation through this application.
+  // The lock is automatically released when the event transaction ends.
+  await client.query('SELECT pg_advisory_xact_lock($1, $2)', [
+    12031,
+    45001
+  ])
+
+  // Normalize casing and repeated whitespace when comparing venue identity.
+  const existing = await client.query(
+    `SELECT id
+     FROM venues
+     WHERE LOWER(REGEXP_REPLACE(BTRIM(name), '[[:space:]]+', ' ', 'g')) =
+           LOWER(REGEXP_REPLACE(BTRIM($1::text), '[[:space:]]+', ' ', 'g'))
+       AND LOWER(REGEXP_REPLACE(BTRIM(address), '[[:space:]]+', ' ', 'g')) =
+           LOWER(REGEXP_REPLACE(BTRIM($2::text), '[[:space:]]+', ' ', 'g'))
+       AND LOWER(REGEXP_REPLACE(BTRIM(city), '[[:space:]]+', ' ', 'g')) =
+           LOWER(REGEXP_REPLACE(BTRIM($3::text), '[[:space:]]+', ' ', 'g'))
+     ORDER BY id
+     LIMIT 1`,
+    [name, address, city]
+  )
+
+  if (existing.rowCount > 0) {
+    return existing.rows[0].id
+  }
+
+  const { rows: [venue] } = await client.query(
+    `INSERT INTO venues
+       (owner_id, name, address, city, website_url, latitude, longitude)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
+    [
+      1,
+      name,
+      address,
+      city,
+      newVenue.website_url || null,
+      newVenue.latitude ?? null,
+      newVenue.longitude ?? null
+    ]
+  )
+
+  return venue.id
+}
 function validateEvent(body) {
   const { venue_id, activity_type_id, title, start_time, end_time, price = 0, tag_ids = [] } = body
-  if (!Number.isInteger(venue_id)) return 'venue_id must be an integer'
+  if (body.new_venue != null) {
+    const v = body.new_venue
+
+    if (typeof v !== 'object' || Array.isArray(v) ||
+        typeof v.name !== 'string' || !v.name.trim() ||
+        typeof v.address !== 'string' || !v.address.trim() ||
+        typeof v.city !== 'string' || !v.city.trim() ||
+        typeof v.state !== 'string' ||
+        !/^(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)$/.test(v.state) ||
+        (v.zip_code != null &&
+         (typeof v.zip_code !== 'string' ||
+          (v.zip_code !== '' && !/^\d{5}(-\d{4})?$/.test(v.zip_code))))) {
+      return 'New venue requires name, street address, and city'
+    }
+
+    if (v.website_url != null &&
+        (typeof v.website_url !== 'string' ||
+         !/^https?:\/\/[^/\s]+\.[^/\s]+/i.test(v.website_url))) {
+      return 'Invalid venue website URL'
+    }
+
+    if (v.latitude != null &&
+        (typeof v.latitude !== 'number' ||
+         !Number.isFinite(v.latitude) ||
+         Math.abs(v.latitude) > 90)) {
+      return 'Invalid latitude'
+    }
+
+    if (v.longitude != null &&
+        (typeof v.longitude !== 'number' ||
+         !Number.isFinite(v.longitude) ||
+         Math.abs(v.longitude) > 180)) {
+      return 'Invalid longitude'
+    }
+  } else if (!Number.isInteger(venue_id)) {
+    return 'venue_id must be an integer'
+  }
   if (!Number.isInteger(activity_type_id)) return 'activity_type_id must be an integer'
   if (typeof title !== 'string' || !title.trim()) return 'title is required'
   const start = Date.parse(start_time)
@@ -87,21 +222,29 @@ router.post('/', async (req, res) => {
   const error = validateEvent(req.body ?? {})
   if (error) return res.status(400).json({ error })
 
-  const { venue_id, activity_type_id, title, description = null, what_to_bring = null, start_time, end_time, price = 0, tag_ids = [] } = req.body
+  const imageError = validateImageUrl(req.body?.image_url)
+  if (imageError) return res.status(400).json({ error: imageError })
+
+  const { venue_id, new_venue, activity_type_id, title, description = null, what_to_bring = null, start_time, end_time, price = 0, tag_ids = [] } = req.body
   const client = await pool.connect()
 
   try {
     // Event row and its tag links succeed or fail together
     await client.query('BEGIN')
+    const resolvedVenueId = await resolveVenueId(
+      client, venue_id, new_venue
+    )
     const { rows: [{ id }] } = await client.query(
       `INSERT INTO events (venue_id, activity_type_id, title, description, what_to_bring, start_time, end_time, price)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [venue_id, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price]
+      [resolvedVenueId, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price]
     )
     await client.query(
       'INSERT INTO event_tags (event_id, tag_id) SELECT $1, unnest($2::int[])',
       [id, [...new Set(tag_ids)]]
     )
+    await saveCoverImage(client, id, req.body.image_url)
+
     await client.query('COMMIT')
 
     const { rows } = await pool.query(`${eventQuery} WHERE e.id = $1 GROUP BY e.id, v.id, a.id`, [id])
@@ -123,16 +266,33 @@ router.put('/:id', async (req, res) => {
   const error = validateEvent(req.body ?? {})
   if (error) return res.status(400).json({ error })
 
-  const { venue_id, activity_type_id, title, description = null, what_to_bring = null, start_time, end_time, price = 0, tag_ids = [] } = req.body
+  const imageError = validateImageUrl(req.body?.image_url)
+  if (imageError) return res.status(400).json({ error: imageError })
+
+  const { venue_id, new_venue, activity_type_id, title, description = null, what_to_bring = null, start_time, end_time, price = 0, tag_ids = [] } = req.body
   const client = await pool.connect()
 
   try {
     await client.query('BEGIN')
+
+    const existingEvent = await client.query(
+      'SELECT id FROM events WHERE id = $1 FOR UPDATE',
+      [id]
+    )
+
+    if (!existingEvent.rowCount) {
+      await client.query('ROLLBACK')
+      return res.status(404).json({ error: 'Event not found' })
+    }
+
+    const resolvedVenueId = await resolveVenueId(
+      client, venue_id, new_venue
+    )
     const { rowCount } = await client.query(
       `UPDATE events SET venue_id = $2, activity_type_id = $3, title = $4, description = $5,
          what_to_bring = $6, start_time = $7, end_time = $8, price = $9
        WHERE id = $1`,
-      [id, venue_id, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price]
+      [id, resolvedVenueId, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price]
     )
     if (!rowCount) {
       await client.query('ROLLBACK')
@@ -143,6 +303,8 @@ router.put('/:id', async (req, res) => {
       'INSERT INTO event_tags (event_id, tag_id) SELECT $1, unnest($2::int[])',
       [id, [...new Set(tag_ids)]]
     )
+    await saveCoverImage(client, id, req.body.image_url)
+
     await client.query('COMMIT')
 
     const { rows } = await pool.query(`${eventQuery} WHERE e.id = $1 GROUP BY e.id, v.id, a.id`, [id])
