@@ -10,8 +10,11 @@ const schema = `
   CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    email TEXT UNIQUE,
+    password_hash TEXT, -- seed users only; GitHub users have none
+    github_id TEXT UNIQUE,
+    username TEXT,
+    avatar_url TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
   );
 
