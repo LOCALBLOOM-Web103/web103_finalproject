@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../AuthContext.jsx'
 
 function VenuesPage() {
+  const { user } = useAuth()
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -116,15 +118,17 @@ function VenuesPage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                className="secondary-button danger"
-                disabled={deletingId !== null}
-                onClick={() => deleteVenue(venue)}
-                aria-label={`Delete ${venue.name}, venue ID ${venue.id}`}
-              >
-                {deletingId === venue.id ? 'Deleting...' : 'Delete'}
-              </button>
+              {user?.id === venue.owner_id && (
+                <button
+                  type="button"
+                  className="secondary-button danger"
+                  disabled={deletingId !== null}
+                  onClick={() => deleteVenue(venue)}
+                  aria-label={`Delete ${venue.name}, venue ID ${venue.id}`}
+                >
+                  {deletingId === venue.id ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
             </li>
           ))}
         </ul>

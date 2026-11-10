@@ -25,7 +25,7 @@ router.get('/tags', async (req, res) => {
 
 router.get('/venues', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, name, city FROM venues ORDER BY name')
+    const { rows } = await pool.query('SELECT id, name, city, owner_id FROM venues ORDER BY name')
     res.json(rows)
   } catch (err) {
     res.status(500).json({ error: err.message })

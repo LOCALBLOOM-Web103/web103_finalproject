@@ -13,6 +13,13 @@
 }
 .logo { font-family: var(--font-display); font-size: 1.4rem; color: var(--text-h); text-decoration: none; }
 
+/* Post button + login/logout on the right of the header */
+.header-actions { display: flex; align-items: center; gap: 12px; }
+.header-actions .secondary-button { text-decoration: none; white-space: nowrap; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; }
+.username { color: var(--text-h); font-weight: 600; }
+@media (max-width: 600px) { .username { display: none; } }
+
 /* Raised 3D button: the darker ledge is a solid shadow; pressing pushes the face down onto it */
 .post-button {
   display: inline-flex;
