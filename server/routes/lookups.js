@@ -1,5 +1,6 @@
 import express from 'express'
 import { pool } from '../config/database.js'
+import { requireAuth, ownershipError } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -31,10 +32,8 @@ router.get('/venues', async (req, res) => {
   }
 })
 
-// DELETE /api/venues/:id
-// Development-only endpoint. Add authentication and ownership
-// authorization before deploying venue management publicly.
-router.delete('/venues/:id', async (req, res) => {
+// DELETE /api/venues/:id  only the venue's owner
+router.delete('/venues/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id)
 
   if (!Number.isSafeInteger(id) || id <= 0) {
@@ -49,14 +48,14 @@ router.delete('/venues/:id', async (req, res) => {
     transactionOpen = true
 
     const venue = await client.query(
-      'SELECT id, name FROM venues WHERE id = $1 FOR UPDATE',
+      'SELECT owner_id FROM venues WHERE id = $1 FOR UPDATE',
       [id]
     )
-
-    if (!venue.rowCount) {
+    const denied = ownershipError(venue.rows[0]?.owner_id, req.user.id, 'Venue')
+    if (denied) {
       await client.query('ROLLBACK')
       transactionOpen = false
-      return res.status(404).json({ error: 'Venue not found' })
+      return res.status(denied.status).json({ error: denied.error })
     }
 
     const linkedEvents = await client.query(
