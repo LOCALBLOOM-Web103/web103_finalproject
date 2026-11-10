@@ -17,6 +17,7 @@ Reference the Creating an Entity Relationship Diagram final project guide in the
 ```mermaid
 erDiagram
     users ||--o{ venues : owns
+    users ||--o{ events : creates
     venues ||--o{ events : hosts
     activity_types ||--o{ events : categorizes
     events ||--o{ event_images : has
@@ -27,7 +28,9 @@ erDiagram
         int id PK
         text name
         text email UK
-        text password_hash
+        text github_id UK
+        text username
+        text avatar_url
         timestamp created_at
     }
     venues {
@@ -51,6 +54,7 @@ erDiagram
         timestamp start_time
         timestamp end_time
         numeric price
+        int created_by FK
     }
     activity_types {
         int id PK
@@ -78,8 +82,10 @@ erDiagram
 |-------------|------|-------------|
 | id | integer | primary key |
 | name | text | display name of the owner/organizer |
-| email | text | unique login email |
-| password_hash | text | hashed password |
+| email | text | unique contact email (optional; GitHub may not share it) |
+| github_id | text | unique GitHub account id, set on first GitHub login |
+| username | text | GitHub username |
+| avatar_url | text | GitHub profile picture |
 | created_at | timestamp | account creation time |
 
 ### venues
@@ -109,6 +115,7 @@ erDiagram
 | start_time | timestamp | event date and start time |
 | end_time | timestamp | event end time |
 | price | numeric | admission cost (0 = Free); the $ / $$ / $$$ tier is derived from it |
+| created_by | integer | foreign key → users.id; only this user can edit or delete the event |
 
 ### activity_types
 

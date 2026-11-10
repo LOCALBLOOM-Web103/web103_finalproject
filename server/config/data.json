@@ -3,20 +3,17 @@
     {
       "id": 1,
       "name": "Maya Lin",
-      "email": "maya@clayandcoffee.com",
-      "password_hash": "seed-no-login"
+      "email": "maya@clayandcoffee.com"
     },
     {
       "id": 2,
       "name": "Jordan Reyes",
-      "email": "jordan@pageturner.com",
-      "password_hash": "seed-no-login"
+      "email": "jordan@pageturner.com"
     },
     {
       "id": 3,
       "name": "Sam Okafor",
-      "email": "sam@fiberloft.com",
-      "password_hash": "seed-no-login"
+      "email": "sam@fiberloft.com"
     }
   ],
   "venues": [
