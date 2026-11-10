@@ -1,5 +1,6 @@
 import express from 'express'
 import { pool } from '../config/database.js'
+import { requireAuth, ownershipError } from '../middleware/auth.js'
 
 function validateImageUrl(imageUrl) {
   if (imageUrl === undefined || imageUrl === null || imageUrl === '') return null
@@ -106,18 +107,8 @@ router.get('/:id', async (req, res) => {
 })
 
 // Basic checks only; stricter validation (URLs, address format) is a separate issue
-async function resolveVenueId(client, venueId, newVenue) {
+async function resolveVenueId(client, venueId, newVenue, ownerId) {
   if (newVenue == null) return venueId
-
-  // Development-only ownership until user authentication is implemented.
-  const owner = await client.query(
-    'SELECT id FROM users WHERE id = $1',
-    [1]
-  )
-
-  if (!owner.rowCount) {
-    throw new Error('Development venue owner (user 1) does not exist')
-  }
 
   const name = newVenue.name.trim()
   const address = `${newVenue.address.trim()}, ${newVenue.state}${newVenue.zip_code ? ` ${newVenue.zip_code}` : ''}`
@@ -155,7 +146,7 @@ async function resolveVenueId(client, venueId, newVenue) {
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING id`,
     [
-      1,
+      ownerId,
       name,
       address,
       city,
@@ -218,7 +209,7 @@ function validateEvent(body) {
 }
 
 // POST /api/events  body: { venue_id, activity_type_id, title, description, what_to_bring, start_time, end_time, price, tag_ids: [1, 2] }
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   const error = validateEvent(req.body ?? {})
   if (error) return res.status(400).json({ error })
 
@@ -232,12 +223,12 @@ router.post('/', async (req, res) => {
     // Event row and its tag links succeed or fail together
     await client.query('BEGIN')
     const resolvedVenueId = await resolveVenueId(
-      client, venue_id, new_venue
+      client, venue_id, new_venue, req.user.id
     )
     const { rows: [{ id }] } = await client.query(
-      `INSERT INTO events (venue_id, activity_type_id, title, description, what_to_bring, start_time, end_time, price)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [resolvedVenueId, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price]
+      `INSERT INTO events (venue_id, activity_type_id, title, description, what_to_bring, start_time, end_time, price, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [resolvedVenueId, activity_type_id, title.trim(), description, what_to_bring, start_time, end_time, price, req.user.id]
     )
     await client.query(
       'INSERT INTO event_tags (event_id, tag_id) SELECT $1, unnest($2::int[])',
@@ -260,7 +251,7 @@ router.post('/', async (req, res) => {
 })
 
 // PUT /api/events/:id  full replace, same body as POST; tag_ids replaces the event's tags
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Event id must be an integer' })
   const error = validateEvent(req.body ?? {})
@@ -276,17 +267,17 @@ router.put('/:id', async (req, res) => {
     await client.query('BEGIN')
 
     const existingEvent = await client.query(
-      'SELECT id FROM events WHERE id = $1 FOR UPDATE',
+      'SELECT created_by FROM events WHERE id = $1 FOR UPDATE',
       [id]
     )
-
-    if (!existingEvent.rowCount) {
+    const denied = ownershipError(existingEvent.rows[0]?.created_by, req.user.id, 'Event')
+    if (denied) {
       await client.query('ROLLBACK')
-      return res.status(404).json({ error: 'Event not found' })
+      return res.status(denied.status).json({ error: denied.error })
     }
 
     const resolvedVenueId = await resolveVenueId(
-      client, venue_id, new_venue
+      client, venue_id, new_venue, req.user.id
     )
     const { rowCount } = await client.query(
       `UPDATE events SET venue_id = $2, activity_type_id = $3, title = $4, description = $5,
@@ -319,12 +310,17 @@ router.put('/:id', async (req, res) => {
 })
 
 // DELETE /api/events/:id  event_tags and event_images rows go with it (ON DELETE CASCADE)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Event id must be an integer' })
 
   try {
-    const { rowCount } = await pool.query('DELETE FROM events WHERE id = $1', [id])
+    const { rows } = await pool.query('SELECT created_by FROM events WHERE id = $1', [id])
+    const denied = ownershipError(rows[0]?.created_by, req.user.id, 'Event')
+    if (denied) return res.status(denied.status).json({ error: denied.error })
+
+    // created_by in the WHERE too, so ownership can't change between the check and the delete
+    const { rowCount } = await pool.query('DELETE FROM events WHERE id = $1 AND created_by = $2', [id, req.user.id])
     if (!rowCount) return res.status(404).json({ error: 'Event not found' })
     res.status(204).end()
   } catch (err) {

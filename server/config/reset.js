@@ -41,7 +41,8 @@ const schema = `
     what_to_bring TEXT,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
-    price NUMERIC NOT NULL DEFAULT 0 CHECK (price >= 0)
+    price NUMERIC NOT NULL DEFAULT 0 CHECK (price >= 0),
+    created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
   );
 
   CREATE TABLE tags (
@@ -240,13 +241,15 @@ async function seedDatabase(client) {
   }
 
   for (const event of data.events) {
+    // Seeded events belong to their venue's owner
+    const createdBy = data.venues.find(v => v.id === event.venue_id).owner_id
     await insertRow(client, 'events',
       ['id', 'venue_id', 'activity_type_id', 'title',
        'description', 'what_to_bring', 'start_time',
-       'end_time', 'price'],
+       'end_time', 'price', 'created_by'],
       [event.id, event.venue_id, event.activity_type_id,
        event.title, event.description, event.what_to_bring,
-       event.start_time, event.end_time, event.price])
+       event.start_time, event.end_time, event.price, createdBy])
 
     for (const tagId of event.tag_ids) {
       await insertRow(client, 'event_tags',
