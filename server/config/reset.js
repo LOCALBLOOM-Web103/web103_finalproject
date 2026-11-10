@@ -11,8 +11,7 @@ const schema = `
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT UNIQUE,
-    password_hash TEXT, -- seed users only; GitHub users have none
-    github_id TEXT UNIQUE,
+    github_id TEXT UNIQUE, -- NULL for seed users, who can't log in
     username TEXT,
     avatar_url TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -110,7 +109,6 @@ function validateData() {
   for (const user of data.users) {
     requiredText(user.name, 'user.name')
     requiredText(user.email, 'user.email')
-    requiredText(user.password_hash, 'user.password_hash')
   }
 
   for (const venue of data.venues) {
@@ -220,8 +218,8 @@ async function insertRow(client, table, columns, values) {
 async function seedDatabase(client) {
   for (const user of data.users) {
     await insertRow(client, 'users',
-      ['id', 'name', 'email', 'password_hash'],
-      [user.id, user.name, user.email, user.password_hash])
+      ['id', 'name', 'email'],
+      [user.id, user.name, user.email])
   }
 
   for (const venue of data.venues) {
