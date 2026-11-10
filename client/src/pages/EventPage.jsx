@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { formatDate, priceTier } from "../format.js";
+import { useAuth } from "../AuthContext.jsx";
 
 function EventPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [event, setEvent] = useState(null);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -53,6 +55,8 @@ function EventPage() {
   if (!event) return <p className="status">Loading event…</p>;
 
   const price = Number(event.price);
+  // Only the creator sees Edit/Delete; the server enforces the same rule with a 403
+  const isOwner = user?.id === event.created_by;
 
   return (
     <article className="event-page">
@@ -60,19 +64,21 @@ function EventPage() {
         <Link to="/" className="back">
           ← All events
         </Link>
-        <div className="event-actions">
-          <Link to={`/events/${id}/edit`} className="secondary-button">
-            Edit
-          </Link>
-          <button
-            type="button"
-            className="secondary-button danger"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? "Deleting…" : "Delete"}
-          </button>
-        </div>
+        {isOwner && (
+          <div className="event-actions">
+            <Link to={`/events/${id}/edit`} className="secondary-button">
+              Edit
+            </Link>
+            <button
+              type="button"
+              className="secondary-button danger"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </button>
+          </div>
+        )}
       </div>
       {deleteError && (
         <p className="form-error" role="alert">
