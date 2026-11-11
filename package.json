@@ -1,0 +1,12 @@
+{
+  "name": "localbloom",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run lint --prefix client && npm run lint --prefix server"
+  },
+  "devDependencies": {
+    "prettier": "3.10.0"
+  }
+}

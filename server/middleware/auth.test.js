@@ -4,20 +4,35 @@ import assert from 'node:assert/strict'
 import { requireAuth, ownershipError } from './auth.js'
 
 function fakeRes() {
-  return { code: null, body: null, status(c) { this.code = c; return this }, json(b) { this.body = b; return this } }
+  return {
+    code: null,
+    body: null,
+    status(c) {
+      this.code = c
+      return this
+    },
+    json(b) {
+      this.body = b
+      return this
+    },
+  }
 }
 
 test('requireAuth blocks anonymous requests with 401', () => {
   const res = fakeRes()
   let called = false
-  requireAuth({}, res, () => { called = true })
+  requireAuth({}, res, () => {
+    called = true
+  })
   assert.equal(res.code, 401)
   assert.equal(called, false)
 })
 
 test('requireAuth lets logged-in users through', () => {
   let called = false
-  requireAuth({ user: { id: 1 } }, fakeRes(), () => { called = true })
+  requireAuth({ user: { id: 1 } }, fakeRes(), () => {
+    called = true
+  })
   assert.equal(called, true)
 })
 

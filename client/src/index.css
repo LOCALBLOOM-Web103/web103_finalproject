@@ -13,7 +13,7 @@
   --filter-hover-bg: #165a74;
   --filter-hover-text: #ffcb77;
   --menu-shadow: rgba(37, 132, 167, 0.28);
-  --post-bg: #fe6d73;     /* Grapefruit Pink */
+  --post-bg: #fe6d73; /* Grapefruit Pink */
   --post-ledge: #d9474e;
 
   --font-display: 'Jua', system-ui, sans-serif;
@@ -41,8 +41,21 @@
   }
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; }
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
 /* Jua has a single weight, so keep headings at 400 to avoid faux bold */
-h1, h2, h3 { font-family: var(--font-display); font-weight: 400; color: var(--text-h); line-height: 1.2; }
-a { color: var(--accent); }
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--text-h);
+  line-height: 1.2;
+}
+a {
+  color: var(--accent);
+}
