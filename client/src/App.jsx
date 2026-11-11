@@ -15,26 +15,47 @@ function App() {
   return (
     <>
       <header className="site-header">
-        <Link to="/" className="logo">Local Bloom</Link>
+        <Link to="/" className="logo">
+          Local Bloom
+        </Link>
         {isHome && <Filters />}
         <div className="header-actions">
           <Link to="/events/new" className="post-button">
             <span className="post-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              >
                 <path d="M12 5v14M5 12h14" />
               </svg>
             </span>
             Post
           </Link>
-          {!loading && (user ? (
-            <>
-              {user.avatar_url && <img className="avatar" src={user.avatar_url} alt="" />}
-              <span className="username">{user.username}</span>
-              <button type="button" className="secondary-button" onClick={logout}>Log out</button>
-            </>
-          ) : (
-            <a href={LOGIN_URL} className="secondary-button">Log in with GitHub</a>
-          ))}
+          {!loading &&
+            (user ? (
+              <>
+                {user.avatar_url && (
+                  <img className="avatar" src={user.avatar_url} alt="" />
+                )}
+                <span className="username">{user.username}</span>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={logout}
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <a href={LOGIN_URL} className="secondary-button">
+                Log in with GitHub
+              </a>
+            ))}
         </div>
       </header>
       <main className={isHome ? 'home' : undefined}>
@@ -42,8 +63,22 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/venues" element={<VenuesPage />} />
           {/* Keys stop React reusing form state when switching between create and edit */}
-          <Route path="/events/new" element={<RequireAuth><EventForm key="new" /></RequireAuth>} />
-          <Route path="/events/:id/edit" element={<RequireAuth><EventForm key="edit" /></RequireAuth>} />
+          <Route
+            path="/events/new"
+            element={
+              <RequireAuth>
+                <EventForm key="new" />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/events/:id/edit"
+            element={
+              <RequireAuth>
+                <EventForm key="edit" />
+              </RequireAuth>
+            }
+          />
           <Route path="/events/:id" element={<EventPage />} />
           <Route path="*" element={<p className="status">Page not found.</p>} />
         </Routes>

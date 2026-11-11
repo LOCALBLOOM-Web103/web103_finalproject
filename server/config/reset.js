@@ -72,7 +72,7 @@ function validateData() {
     venues: 4,
     activity_types: 5,
     tags: 10,
-    events: 8
+    events: 8,
   }
 
   for (const [name, count] of Object.entries(expected)) {
@@ -82,10 +82,10 @@ function validateData() {
   }
 
   function idsFor(name) {
-    const ids = data[name].map(row => row.id)
+    const ids = data[name].map((row) => row.id)
 
     if (
-      ids.some(id => !Number.isSafeInteger(id) || id <= 0) ||
+      ids.some((id) => !Number.isSafeInteger(id) || id <= 0) ||
       new Set(ids).size !== ids.length
     ) {
       throw new Error(`Invalid or duplicate IDs in ${name}`)
@@ -123,7 +123,7 @@ function validateData() {
     if (
       venue.latitude != null &&
       (!Number.isFinite(Number(venue.latitude)) ||
-       Math.abs(Number(venue.latitude)) > 90)
+        Math.abs(Number(venue.latitude)) > 90)
     ) {
       throw new Error(`Invalid latitude for venue ${venue.id}`)
     }
@@ -131,7 +131,7 @@ function validateData() {
     if (
       venue.longitude != null &&
       (!Number.isFinite(Number(venue.longitude)) ||
-       Math.abs(Number(venue.longitude)) > 180)
+        Math.abs(Number(venue.longitude)) > 180)
     ) {
       throw new Error(`Invalid longitude for venue ${venue.id}`)
     }
@@ -157,17 +157,11 @@ function validateData() {
     requiredText(event.start_time, 'event.start_time')
     requiredText(event.end_time, 'event.end_time')
 
-    if (
-      !Number.isFinite(Number(event.price)) ||
-      Number(event.price) < 0
-    ) {
+    if (!Number.isFinite(Number(event.price)) || Number(event.price) < 0) {
       throw new Error(`Invalid price for event ${event.id}`)
     }
 
-    if (
-      !Array.isArray(event.tag_ids) ||
-      !Array.isArray(event.images)
-    ) {
+    if (!Array.isArray(event.tag_ids) || !Array.isArray(event.images)) {
       throw new Error(`Invalid relationships for event ${event.id}`)
     }
 
@@ -205,7 +199,7 @@ function validateData() {
     tags: data.tags.length,
     events: data.events.length,
     event_tags: tagLinks,
-    event_images: imageCount
+    event_images: imageCount,
   })
 }
 
@@ -217,64 +211,119 @@ async function insertRow(client, table, columns, values) {
 
 async function seedDatabase(client) {
   for (const user of data.users) {
-    await insertRow(client, 'users',
+    await insertRow(
+      client,
+      'users',
       ['id', 'name', 'email'],
-      [user.id, user.name, user.email])
+      [user.id, user.name, user.email],
+    )
   }
 
   for (const venue of data.venues) {
-    await insertRow(client, 'venues',
-      ['id', 'owner_id', 'name', 'address', 'city',
-       'latitude', 'longitude', 'website_url', 'hours'],
-      [venue.id, venue.owner_id, venue.name, venue.address,
-       venue.city, venue.latitude, venue.longitude,
-       venue.website_url, venue.hours])
+    await insertRow(
+      client,
+      'venues',
+      [
+        'id',
+        'owner_id',
+        'name',
+        'address',
+        'city',
+        'latitude',
+        'longitude',
+        'website_url',
+        'hours',
+      ],
+      [
+        venue.id,
+        venue.owner_id,
+        venue.name,
+        venue.address,
+        venue.city,
+        venue.latitude,
+        venue.longitude,
+        venue.website_url,
+        venue.hours,
+      ],
+    )
   }
 
   for (const type of data.activity_types) {
-    await insertRow(client, 'activity_types',
-      ['id', 'name'], [type.id, type.name])
+    await insertRow(
+      client,
+      'activity_types',
+      ['id', 'name'],
+      [type.id, type.name],
+    )
   }
 
   for (const tag of data.tags) {
-    await insertRow(client, 'tags',
-      ['id', 'name'], [tag.id, tag.name])
+    await insertRow(client, 'tags', ['id', 'name'], [tag.id, tag.name])
   }
 
   for (const event of data.events) {
     // Seeded events belong to their venue's owner
-    const createdBy = data.venues.find(v => v.id === event.venue_id).owner_id
-    await insertRow(client, 'events',
-      ['id', 'venue_id', 'activity_type_id', 'title',
-       'description', 'what_to_bring', 'start_time',
-       'end_time', 'price', 'created_by'],
-      [event.id, event.venue_id, event.activity_type_id,
-       event.title, event.description, event.what_to_bring,
-       event.start_time, event.end_time, event.price, createdBy])
+    const createdBy = data.venues.find((v) => v.id === event.venue_id).owner_id
+    await insertRow(
+      client,
+      'events',
+      [
+        'id',
+        'venue_id',
+        'activity_type_id',
+        'title',
+        'description',
+        'what_to_bring',
+        'start_time',
+        'end_time',
+        'price',
+        'created_by',
+      ],
+      [
+        event.id,
+        event.venue_id,
+        event.activity_type_id,
+        event.title,
+        event.description,
+        event.what_to_bring,
+        event.start_time,
+        event.end_time,
+        event.price,
+        createdBy,
+      ],
+    )
 
     for (const tagId of event.tag_ids) {
-      await insertRow(client, 'event_tags',
-        ['event_id', 'tag_id'], [event.id, tagId])
+      await insertRow(
+        client,
+        'event_tags',
+        ['event_id', 'tag_id'],
+        [event.id, tagId],
+      )
     }
 
     for (const image of event.images) {
-      await insertRow(client, 'event_images',
+      await insertRow(
+        client,
+        'event_images',
         ['event_id', 'url', 'position'],
-        [event.id, image.url, image.position])
+        [event.id, image.url, image.position],
+      )
     }
   }
 
   // Explicit IDs require synchronizing PostgreSQL SERIAL sequences.
-  for (const table of [
-    'users', 'venues', 'activity_types', 'tags', 'events'
-  ]) {
-    await client.query(`
+  for (const table of ['users', 'venues', 'activity_types', 'tags', 'events']) {
+    await client.query(
+      `
       SELECT setval(
         pg_get_serial_sequence($1, 'id'),
         (SELECT MAX(id) FROM ${table}),
         true
       )
-    `, [table])
+    `,
+      [table],
+    )
   }
 }
 
@@ -287,10 +336,7 @@ async function main() {
     return
   }
 
-  if (
-    process.env.LOCALBLOOM_CONFIRM_RESET !==
-    'DELETE_AND_RESEED_LOCALBLOOM'
-  ) {
+  if (process.env.LOCALBLOOM_CONFIRM_RESET !== 'DELETE_AND_RESEED_LOCALBLOOM') {
     throw new Error('Explicit reset confirmation is required.')
   }
 
@@ -332,7 +378,7 @@ async function main() {
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('Reset/validation failed:', error.message)
   process.exitCode = 1
 })

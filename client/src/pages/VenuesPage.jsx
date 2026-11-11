@@ -45,7 +45,7 @@ function VenuesPage() {
   async function deleteVenue(venue) {
     const confirmed = window.confirm(
       `Delete "${venue.name}" (ID ${venue.id})?\n\n` +
-      'This action cannot be undone. Venues with associated events cannot be deleted.'
+        'This action cannot be undone. Venues with associated events cannot be deleted.',
     )
 
     if (!confirmed) return
@@ -56,7 +56,7 @@ function VenuesPage() {
 
     try {
       const response = await fetch(`/api/venues/${venue.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       })
 
       if (!response.ok) {
@@ -71,12 +71,12 @@ function VenuesPage() {
         if (response.status === 409) {
           throw new Error(
             details.error ||
-            'This venue cannot be deleted because it is referenced by events.'
+              'This venue cannot be deleted because it is referenced by events.',
           )
         }
 
         throw new Error(
-          details.error || `Venue deletion failed (HTTP ${response.status}).`
+          details.error || `Venue deletion failed (HTTP ${response.status}).`,
         )
       }
 
@@ -100,7 +100,11 @@ function VenuesPage() {
         Delete unused venues. Venues associated with events are protected.
       </p>
 
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
       {message && <p role="status">{message}</p>}
 
       {loading ? (

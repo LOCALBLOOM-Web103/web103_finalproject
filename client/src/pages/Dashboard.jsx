@@ -3,7 +3,11 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { formatShortDate, milesBetween, priceTier } from '../format.js'
 
 const getJson = (url) =>
-  fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(new Error(`Request failed (${res.status})`))))
+  fetch(url).then((res) =>
+    res.ok
+      ? res.json()
+      : Promise.reject(new Error(`Request failed (${res.status})`)),
+  )
 
 // Browser location, used for the distance shown on each tile and the distance filter
 function useUserLocation() {
@@ -13,9 +17,10 @@ function useUserLocation() {
   useEffect(() => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => setLocation({ lat: coords.latitude, lng: coords.longitude }),
+      ({ coords }) =>
+        setLocation({ lat: coords.latitude, lng: coords.longitude }),
       () => setUnavailable(true),
-      { maximumAge: 10 * 60 * 1000 }
+      { maximumAge: 10 * 60 * 1000 },
     )
   }, [])
 
@@ -24,7 +29,15 @@ function useUserLocation() {
 
 function PinIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
       <circle cx="12" cy="9.5" r="2.5" />
     </svg>
@@ -47,9 +60,18 @@ function Dashboard() {
   useEffect(() => {
     let stale = false // ignore responses from an older filter combination
     getJson(`/api/events${query ? `?${query}` : ''}`)
-      .then((data) => { if (!stale) { setEvents(data); setError(null) } })
-      .catch((err) => { if (!stale) setError(err.message) })
-    return () => { stale = true }
+      .then((data) => {
+        if (!stale) {
+          setEvents(data)
+          setError(null)
+        }
+      })
+      .catch((err) => {
+        if (!stale) setError(err.message)
+      })
+    return () => {
+      stale = true
+    }
   }, [query])
 
   if (error) return <p className="status">Couldn't load events: {error}</p>
@@ -57,16 +79,27 @@ function Dashboard() {
 
   const withDistance = events.map((event) => ({
     ...event,
-    distance: location && event.latitude != null && event.longitude != null
-      ? milesBetween(location, { lat: Number(event.latitude), lng: Number(event.longitude) })
-      : null
+    distance:
+      location && event.latitude != null && event.longitude != null
+        ? milesBetween(location, {
+            lat: Number(event.latitude),
+            lng: Number(event.longitude),
+          })
+        : null,
   }))
-  const visible = radius && location ? withDistance.filter((e) => e.distance !== null && e.distance <= radius) : withDistance
+  const visible =
+    radius && location
+      ? withDistance.filter((e) => e.distance !== null && e.distance <= radius)
+      : withDistance
 
   return (
     <>
       {radius && !location && (
-        <p className="notice">{unavailable ? 'Allow location access to filter by distance.' : 'Finding your location…'}</p>
+        <p className="notice">
+          {unavailable
+            ? 'Allow location access to filter by distance.'
+            : 'Finding your location…'}
+        </p>
       )}
       {!visible.length ? (
         <p className="status">No events match these filters.</p>
@@ -74,15 +107,25 @@ function Dashboard() {
         <div className="tile-grid">
           {visible.map((event) => (
             <Link to={`/events/${event.id}`} className="tile" key={event.id}>
-              {event.images[0]
-                ? <img src={event.images[0]} alt="" loading="lazy" />
-                : <div className="img-placeholder" aria-hidden="true">🌸</div>}
+              {event.images[0] ? (
+                <img src={event.images[0]} alt="" loading="lazy" />
+              ) : (
+                <div className="img-placeholder" aria-hidden="true">
+                  🌸
+                </div>
+              )}
               <div className="tile-info">
                 <h2>{event.title}</h2>
                 <p className="tile-type">{event.activity_type}</p>
                 <p className="tile-meta">
                   {event.distance !== null && (
-                    <span><PinIcon /> {event.distance < 10 ? event.distance.toFixed(1) : Math.round(event.distance)} mi</span>
+                    <span>
+                      <PinIcon />{' '}
+                      {event.distance < 10
+                        ? event.distance.toFixed(1)
+                        : Math.round(event.distance)}{' '}
+                      mi
+                    </span>
                   )}
                   <span>{priceTier(event.price)}</span>
                   <span>{formatShortDate(event.start_time)}</span>
