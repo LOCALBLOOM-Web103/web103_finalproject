@@ -170,7 +170,13 @@ async function resolveVenueId(client, venueId, newVenue, ownerId) {
 
   return venue.id
 }
-function validateEvent(body) {
+// PATCH: fields missing from the body keep the event's current values.
+// pg returns NUMERIC as a string, so price is turned back into a number for validateEvent.
+export function mergeEventPatch(existing, body) {
+  return { ...existing, price: Number(existing.price), ...body }
+}
+
+export function validateEvent(body) {
   const {
     venue_id,
     activity_type_id,
@@ -318,80 +324,70 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
-// PUT /api/events/:id  full replace, same body as POST; tag_ids replaces the event's tags
-router.put('/:id', requireAuth, async (req, res) => {
+// PATCH /api/events/:id  partial update: send only the fields to change.
+// tag_ids (if sent) replaces the event's tags; image_url (if sent) replaces the cover image.
+router.patch('/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isInteger(id))
     return res.status(400).json({ error: 'Event id must be an integer' })
-  const error = validateEvent(req.body ?? {})
-  if (error) return res.status(400).json({ error })
 
   const imageError = validateImageUrl(req.body?.image_url)
   if (imageError) return res.status(400).json({ error: imageError })
 
-  const {
-    venue_id,
-    new_venue,
-    activity_type_id,
-    title,
-    description = null,
-    what_to_bring = null,
-    start_time,
-    end_time,
-    price = 0,
-    tag_ids = [],
-  } = req.body
   const client = await pool.connect()
 
   try {
     await client.query('BEGIN')
 
-    const existingEvent = await client.query(
-      'SELECT created_by FROM events WHERE id = $1 FOR UPDATE',
-      [id],
-    )
-    const denied = ownershipError(
-      existingEvent.rows[0]?.created_by,
-      req.user.id,
-      'Event',
-    )
+    const {
+      rows: [existing],
+    } = await client.query('SELECT * FROM events WHERE id = $1 FOR UPDATE', [
+      id,
+    ])
+    const denied = ownershipError(existing?.created_by, req.user.id, 'Event')
     if (denied) {
       await client.query('ROLLBACK')
       return res.status(denied.status).json({ error: denied.error })
     }
 
+    // Validate the merged result, so e.g. a new end_time is checked against the stored start_time
+    const event = mergeEventPatch(existing, req.body)
+    const error = validateEvent(event)
+    if (error) {
+      await client.query('ROLLBACK')
+      return res.status(400).json({ error })
+    }
+
     const resolvedVenueId = await resolveVenueId(
       client,
-      venue_id,
-      new_venue,
+      event.venue_id,
+      event.new_venue,
       req.user.id,
     )
-    const { rowCount } = await client.query(
+    await client.query(
       `UPDATE events SET venue_id = $2, activity_type_id = $3, title = $4, description = $5,
          what_to_bring = $6, start_time = $7, end_time = $8, price = $9
        WHERE id = $1`,
       [
         id,
         resolvedVenueId,
-        activity_type_id,
-        title.trim(),
-        description,
-        what_to_bring,
-        start_time,
-        end_time,
-        price,
+        event.activity_type_id,
+        event.title.trim(),
+        event.description ?? null,
+        event.what_to_bring ?? null,
+        event.start_time,
+        event.end_time,
+        event.price,
       ],
     )
-    if (!rowCount) {
-      await client.query('ROLLBACK')
-      return res.status(404).json({ error: 'Event not found' })
+    if (req.body?.tag_ids !== undefined) {
+      await client.query('DELETE FROM event_tags WHERE event_id = $1', [id])
+      await client.query(
+        'INSERT INTO event_tags (event_id, tag_id) SELECT $1, unnest($2::int[])',
+        [id, [...new Set(event.tag_ids)]],
+      )
     }
-    await client.query('DELETE FROM event_tags WHERE event_id = $1', [id])
-    await client.query(
-      'INSERT INTO event_tags (event_id, tag_id) SELECT $1, unnest($2::int[])',
-      [id, [...new Set(tag_ids)]],
-    )
-    await saveCoverImage(client, id, req.body.image_url)
+    await saveCoverImage(client, id, req.body?.image_url)
 
     await client.query('COMMIT')
 
