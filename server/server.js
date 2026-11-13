@@ -6,6 +6,8 @@ import { pool } from './config/database.js'
 import authRouter from './routes/auth.js'
 import eventsRouter from './routes/events.js'
 import lookupsRouter from './routes/lookups.js'
+import { requireAuth } from './middleware/auth.js'
+import { resetDemoData } from './config/reset.js'
 
 // express-session only warns without a secret, so fail loudly instead
 if (!process.env.SESSION_SECRET)
@@ -39,6 +41,16 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.use('/auth', authRouter)
 app.use('/api/events', eventsRouter)
 app.use('/api', lookupsRouter)
+
+// Custom non-RESTful action: put the demo events/venues/tags back to their seeded state
+app.post('/api/reset', requireAuth, async (req, res) => {
+  try {
+    await resetDemoData(pool)
+    res.json({ status: 'reset' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () =>
