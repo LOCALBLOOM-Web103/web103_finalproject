@@ -206,7 +206,7 @@ function EventForm() {
     try {
       // Selects and number inputs give strings; the API expects integers/numbers
       const res = await fetch(isEdit ? `/api/events/${id}` : '/api/events', {
-        method: isEdit ? 'PUT' : 'POST',
+        method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
