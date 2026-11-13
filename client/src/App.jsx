@@ -4,6 +4,7 @@ import EventPage from './pages/EventPage.jsx'
 import EventForm from './pages/EventForm.jsx'
 import VenuesPage from './pages/VenuesPage.jsx'
 import Filters from './components/Filters.jsx'
+import ResetButton from './components/ResetButton.jsx'
 import { LOGIN_URL, RequireAuth, useAuth } from './AuthContext.jsx'
 import './App.css'
 
@@ -39,6 +40,7 @@ function App() {
           {!loading &&
             (user ? (
               <>
+                <ResetButton />
                 {user.avatar_url && (
                   <img className="avatar" src={user.avatar_url} alt="" />
                 )}

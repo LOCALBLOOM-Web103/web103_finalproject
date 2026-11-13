@@ -378,7 +378,31 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error('Reset/validation failed:', error.message)
-  process.exitCode = 1
-})
+// Used by POST /api/reset. Unlike the CLI reset it keeps the schema, GitHub users and
+// sessions (so the person clicking stays logged in) and only puts the demo data back.
+export async function resetDemoData(pool) {
+  validateData()
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(`
+      TRUNCATE event_images, event_tags, events, tags, activity_types, venues RESTART IDENTITY;
+      DELETE FROM users WHERE github_id IS NULL;
+    `)
+    await seedDatabase(client)
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+// Only run the CLI when this file is executed (npm run reset), not when the server imports it
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error('Reset/validation failed:', error.message)
+    process.exitCode = 1
+  })
+}
