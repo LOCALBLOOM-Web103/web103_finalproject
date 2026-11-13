@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import TagPicker from '../components/TagPicker.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -503,28 +504,11 @@ function EventForm() {
         <input value={form.what_to_bring} onChange={set('what_to_bring')} />
       </label>
 
-      <fieldset>
-        <legend>Tags (pick any)</legend>
-        <div className="tag-picker">
-          {options.tags.map((t) => (
-            <label
-              key={t.id}
-              className={
-                form.tag_ids.includes(t.id)
-                  ? 'tag-option checked'
-                  : 'tag-option'
-              }
-            >
-              <input
-                type="checkbox"
-                checked={form.tag_ids.includes(t.id)}
-                onChange={() => toggleTag(t.id)}
-              />
-              #{t.name}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <TagPicker
+        tags={options.tags}
+        selected={form.tag_ids}
+        onToggle={toggleTag}
+      />
 
       {submitError && (
         <p className="form-error" role="alert">

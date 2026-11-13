@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { formatShortDate, milesBetween, priceTier } from '../format.js'
+import { useSearchParams } from 'react-router-dom'
+import { milesBetween } from '../format.js'
+import EventCard from '../components/EventCard.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -27,23 +28,7 @@ function useUserLocation() {
   return { location, unavailable }
 }
 
-function PinIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="14"
-      height="14"
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
-      <circle cx="12" cy="9.5" r="2.5" />
-    </svg>
-  )
-}
-
+// Container: fetches events and works out distances; EventCard draws each tile
 function Dashboard() {
   // Filters are set by the header (?tier=$$&activity_type=Workshop&radius=10)
   const [searchParams] = useSearchParams()
@@ -106,32 +91,7 @@ function Dashboard() {
       ) : (
         <div className="tile-grid">
           {visible.map((event) => (
-            <Link to={`/events/${event.id}`} className="tile" key={event.id}>
-              {event.images[0] ? (
-                <img src={event.images[0]} alt="" loading="lazy" />
-              ) : (
-                <div className="img-placeholder" aria-hidden="true">
-                  🌸
-                </div>
-              )}
-              <div className="tile-info">
-                <h2>{event.title}</h2>
-                <p className="tile-type">{event.activity_type}</p>
-                <p className="tile-meta">
-                  {event.distance !== null && (
-                    <span>
-                      <PinIcon />{' '}
-                      {event.distance < 10
-                        ? event.distance.toFixed(1)
-                        : Math.round(event.distance)}{' '}
-                      mi
-                    </span>
-                  )}
-                  <span>{priceTier(event.price)}</span>
-                  <span>{formatShortDate(event.start_time)}</span>
-                </p>
-              </div>
-            </Link>
+            <EventCard key={event.id} event={event} distance={event.distance} />
           ))}
         </div>
       )}
