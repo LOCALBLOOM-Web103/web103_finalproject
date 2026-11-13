@@ -1,4 +1,5 @@
 import express from 'express'
+import { fileURLToPath } from 'node:url'
 import session from 'express-session'
 import connectPgSimple from 'connect-pg-simple'
 import passport from 'passport'
@@ -51,6 +52,18 @@ app.post('/api/reset', requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+
+// Unknown API paths get a JSON 404 instead of the React page below
+app.use(['/api', '/auth'], (req, res) =>
+  res.status(404).json({ error: 'Not found' }),
+)
+
+// Serve the built React app (npm run build) from the same origin as the API, so
+// the login cookie and /api calls need no CORS. In dev, Vite serves the client instead.
+const clientDist = fileURLToPath(new URL('../client/dist', import.meta.url))
+app.use(express.static(clientDist))
+// Any other path is a React Router route: send index.html so refreshing /events/5 works
+app.get('*', (req, res) => res.sendFile('index.html', { root: clientDist }))
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () =>
