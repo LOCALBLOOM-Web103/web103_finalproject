@@ -113,7 +113,55 @@ router.get('/:id', async (req, res) => {
       [id],
     )
     if (!rows.length) return res.status(404).json({ error: 'Event not found' })
-    res.json(rows[0])
+
+    // Whether the logged-in user has saved this event (always false when logged out)
+    let saved = false
+    if (req.user) {
+      const { rowCount } = await pool.query(
+        'SELECT 1 FROM saved_events WHERE user_id = $1 AND event_id = $2',
+        [req.user.id, id],
+      )
+      saved = rowCount > 0
+    }
+    res.json({ ...rows[0], saved })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/events/:id/save  save an event for the logged-in user (saving twice is fine)
+router.post('/:id/save', requireAuth, async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: 'Event id must be an integer' })
+
+  try {
+    await pool.query(
+      `INSERT INTO saved_events (user_id, event_id) VALUES ($1, $2)
+       ON CONFLICT (user_id, event_id) DO NOTHING`,
+      [req.user.id, id],
+    )
+    res.status(201).json({ saved: true })
+  } catch (err) {
+    // 23503 = foreign key violation: no event with this id
+    if (err.code === '23503')
+      return res.status(404).json({ error: 'Event not found' })
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// DELETE /api/events/:id/save  unsave (already unsaved is fine)
+router.delete('/:id/save', requireAuth, async (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id))
+    return res.status(400).json({ error: 'Event id must be an integer' })
+
+  try {
+    await pool.query(
+      'DELETE FROM saved_events WHERE user_id = $1 AND event_id = $2',
+      [req.user.id, id],
+    )
+    res.status(204).end()
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

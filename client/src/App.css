@@ -549,6 +549,10 @@ main.home {
 .secondary-button.danger:hover {
   border-color: var(--danger);
 }
+.secondary-button.saved {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .secondary-button:disabled {
   opacity: 0.6;
   cursor: wait;

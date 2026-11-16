@@ -4,7 +4,8 @@ import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
-// GET /api/profile  the logged-in user, their profile (one-to-one), and the events they created
+// GET /api/profile  the logged-in user, their profile (one-to-one), the events they
+// created, and the events they saved (newest save first)
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -20,7 +21,13 @@ router.get('/', requireAuth, async (req, res) => {
       `SELECT id, title, start_time FROM events WHERE created_by = $1 ORDER BY start_time`,
       [req.user.id],
     )
-    res.json({ ...rows[0], events })
+    const { rows: saved } = await pool.query(
+      `SELECT e.id, e.title, e.start_time, s.saved_at
+       FROM saved_events s JOIN events e ON e.id = s.event_id
+       WHERE s.user_id = $1 ORDER BY s.saved_at DESC`,
+      [req.user.id],
+    )
+    res.json({ ...rows[0], events, saved })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

@@ -72,6 +72,26 @@ function ProfilePage() {
           <Link to="/events/new">Post one</Link>
         </p>
       )}
+
+      <h2>My saved events ({profile.saved.length})</h2>
+      {profile.saved.length ? (
+        <ul className="profile-events">
+          {profile.saved.map((event) => (
+            <li key={event.id}>
+              <Link to={`/events/${event.id}`}>{event.title}</Link>{' '}
+              <span className="muted">
+                {formatShortDate(event.start_time)} · saved{' '}
+                {formatShortDate(event.saved_at)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>
+          No saved events yet. Tap <strong>☆ Save</strong> on any event to keep
+          it here.
+        </p>
+      )}
     </article>
   )
 }

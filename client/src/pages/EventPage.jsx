@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { formatDate, priceTier } from '../format.js'
 import { useAuth } from '../AuthContext.jsx'
+import SaveButton from '../components/SaveButton.jsx'
 
 function EventPage() {
   const { id } = useParams()
@@ -64,19 +65,24 @@ function EventPage() {
         <Link to="/" className="back">
           ← All events
         </Link>
-        {isOwner && (
+        {user && (
           <div className="event-actions">
-            <Link to={`/events/${id}/edit`} className="secondary-button">
-              Edit
-            </Link>
-            <button
-              type="button"
-              className="secondary-button danger"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? 'Deleting…' : 'Delete'}
-            </button>
+            <SaveButton eventId={event.id} initialSaved={event.saved} />
+            {isOwner && (
+              <>
+                <Link to={`/events/${id}/edit`} className="secondary-button">
+                  Edit
+                </Link>
+                <button
+                  type="button"
+                  className="secondary-button danger"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
