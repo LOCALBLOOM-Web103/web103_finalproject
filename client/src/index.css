@@ -3,9 +3,9 @@
   --text: #2b4a57;
   --text-h: #123847;
   --muted: #5d7480;
-  --bg: #fff8e9;
+  --bg: #f7f7f7;
   --card: #ffffff;
-  --border: #f0e2c6;
+  --border: #e8e8ee;
   --accent: #1d6f8d;
   --accent-bg: #ffe9c4;
   --on-accent: #ffffff;
@@ -13,11 +13,12 @@
   --filter-hover-bg: #165a74;
   --filter-hover-text: #ffcb77;
   --menu-shadow: rgba(37, 132, 167, 0.28);
+  --header-shadow: rgba(18, 56, 71, 0.1);
   --post-bg: #fe6d73; /* Grapefruit Pink */
   --post-ledge: #d9474e;
 
-  --font-display: 'Jua', system-ui, sans-serif;
-  --font-body: 'National Park', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Poppins', system-ui, sans-serif;
+  --font-body: 'Lora', Georgia, 'Times New Roman', serif;
 
   font: 16px/1.5 var(--font-body);
   color: var(--text);
@@ -38,6 +39,7 @@
     --on-accent: #0f2a35;
     --danger: #ff8a80;
     --menu-shadow: rgba(36, 229, 210, 0.22);
+    --header-shadow: rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -47,12 +49,11 @@
 body {
   margin: 0;
 }
-/* Jua has a single weight, so keep headings at 400 to avoid faux bold */
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 600;
   color: var(--text-h);
   line-height: 1.2;
 }

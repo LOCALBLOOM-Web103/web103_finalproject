@@ -10,9 +10,11 @@
   padding: 12px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
+  box-shadow: 0 2px 10px var(--header-shadow);
 }
 .logo {
   font-family: var(--font-display);
+  font-weight: 600;
   font-size: 1.4rem;
   color: var(--text-h);
   text-decoration: none;
@@ -29,24 +31,110 @@
   white-space: nowrap;
 }
 .avatar {
-  width: 32px;
-  height: 32px;
+  display: block; /* an inline image leaves a text-line gap below it */
+  width: 40px;
+  height: 40px;
+  flex: none;
   border-radius: 50%;
+  object-fit: cover;
 }
-.username {
-  color: var(--text-h);
-  font-weight: 600;
-}
-.profile-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-}
-.profile-link:hover .username {
-  text-decoration: underline;
+.avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
 }
 
+/* Avatar button + account dropdown, same look as the filter menus */
+.user-menu {
+  position: relative;
+}
+.avatar-button {
+  display: block;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: box-shadow 0.25s ease-in;
+}
+/* Hard shadow ring (no blur) in the Post button's pink */
+.avatar-button:hover,
+.avatar-button[aria-expanded='true'] {
+  box-shadow: 0 0 0 3px var(--post-bg);
+}
+.avatar-button:focus-visible {
+  outline: 3px solid var(--post-bg);
+  outline-offset: 2px;
+}
+.user-menu-list {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: 8px 0;
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow:
+    0 14px 36px var(--menu-shadow),
+    0 2px 6px var(--menu-shadow);
+  overflow: hidden;
+  animation: menu-in 0.2s ease-in;
+}
+.user-menu-name {
+  margin: 0;
+  padding: 8px 24px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.user-menu-list a,
+.user-menu-list button {
+  padding: 12px 24px;
+  border: 0;
+  background: none;
+  color: var(--text-h);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-in,
+    color 0.15s ease-in;
+}
+.user-menu-list a:hover,
+.user-menu-list a:focus-visible,
+.user-menu-list button:hover:not(:disabled),
+.user-menu-list button:focus-visible {
+  outline: none;
+  background: var(--filter-hover-bg);
+  color: var(--filter-hover-text);
+}
+.user-menu-list button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+/* Log out and Reset demo data: red text, filling red on hover */
+.user-menu-list .danger {
+  color: var(--danger);
+}
+.user-menu-list .danger:hover:not(:disabled),
+.user-menu-list .danger:focus-visible {
+  background: var(--danger);
+  color: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  .user-menu-list .danger:hover:not(:disabled),
+  .user-menu-list .danger:focus-visible {
+    color: #2b0a08; /* dark mode's red is light, so it needs dark text */
+  }
+}
 /* /profile page (layout comes from .event-page) */
 .profile-head {
   display: flex;
@@ -63,12 +151,6 @@
   padding-left: 20px;
   line-height: 1.8;
 }
-@media (max-width: 600px) {
-  .username {
-    display: none;
-  }
-}
-
 /* Raised 3D button: the darker ledge is a solid shadow; pressing pushes the face down onto it */
 .post-button {
   display: inline-flex;
@@ -111,6 +193,14 @@
   color: var(--post-bg);
 }
 @media (prefers-reduced-motion: reduce) {
+  .avatar-button,
+  .user-menu-list a,
+  .user-menu-list button {
+    transition: none;
+  }
+  .user-menu-list {
+    animation: none;
+  }
   .post-button {
     transition: none;
   }
@@ -139,7 +229,7 @@
     color 0.25s ease-in;
 }
 .filter span {
-  font-weight: 300;
+  font-weight: 400; /* Lora's lightest weight */
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -249,83 +339,234 @@
   font-size: 2.5rem;
 }
 
+/* Create/edit forms (event and venue): blue text, pill-shaped off-white fields, pink links */
 .event-form {
+  --form-text: #165a74;
+  --field-bg: #f7f7f7;
+  --field-border: #e6e6ea;
+  --field-accent: #2584a7;
+  --field-placeholder: #9bb3bd;
   max-width: 760px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  color: var(--form-text);
+}
+@media (prefers-color-scheme: dark) {
+  .event-form {
+    --form-text: #bfe3ee;
+    --field-bg: #1d4a58;
+    --field-border: #2f6272;
+    --field-accent: #24e5d2;
+    --field-placeholder: #7fa3b0;
+  }
+}
+.event-form [hidden] {
+  display: none;
+}
+.form-page,
+.new-venue {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.event-form a {
+  color: var(--post-bg);
+  font-weight: 600;
 }
 .event-form .back {
   align-self: flex-start;
 }
 .event-form h1 {
   margin: 0;
+  color: var(--form-text);
 }
-.event-form label {
+.step-indicator {
+  margin: -12px 0 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--form-text);
+  opacity: 0.75;
+}
+.event-form label,
+.field-label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-h);
+  color: var(--form-text);
 }
-.event-form input:not([type='checkbox']),
-.event-form select,
+.event-form input:not([type='checkbox']):not([type='radio']),
 .event-form textarea {
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--text);
-  font: inherit;
+  padding: 12px 20px;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  background: var(--field-bg);
+  color: var(--form-text);
+  font-family: var(--font-body);
+  font-size: 1rem;
   font-weight: 400;
 }
+.event-form textarea {
+  border-radius: 24px;
+  resize: vertical;
+}
+.event-form ::placeholder {
+  color: var(--field-placeholder);
+}
 .event-form :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: 2px solid var(--field-accent);
+  outline-offset: 2px;
 }
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .event-form fieldset {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 16px 16px;
+  min-width: 0;
   margin: 0;
+  padding: 16px 20px 20px;
+  border: 1px solid var(--field-border);
+  border-radius: 24px;
 }
 .event-form legend {
-  font-size: 0.9rem;
+  padding: 0 6px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-h);
-  padding: 0 4px;
+  color: var(--form-text);
 }
+
+/* Radio buttons: a ring, with a blue dot and a soft halo */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.event-form .choice {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+.event-form input[type='radio'] {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 2px solid var(--form-text);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s ease-in,
+    border-color 0.15s ease-in;
+}
+.event-form input[type='radio']::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--field-accent);
+  transform: scale(0);
+  transition: transform 0.15s ease-in;
+}
+.event-form input[type='radio']:checked {
+  border-color: var(--field-accent);
+}
+.event-form input[type='radio']:checked::before {
+  transform: scale(1);
+}
+.event-form input[type='radio']:hover,
+.event-form input[type='radio']:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--field-accent) 22%, transparent);
+}
+
+/* Tag chips */
 .tag-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 .event-form .tag-option {
   flex-direction: row;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border: 1px solid var(--border);
+  gap: 8px;
+  padding: 6px 16px;
+  border: 1px solid var(--field-border);
   border-radius: 999px;
+  background: var(--field-bg);
+  font-family: var(--font-body);
   font-weight: 400;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease-in,
+    color 0.15s ease-in;
 }
 .event-form .tag-option.checked {
-  background: var(--accent-bg);
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: transparent;
+  background: var(--filter-hover-bg);
+  color: var(--filter-hover-text);
 }
 .tag-option input {
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--field-accent);
 }
+
+/* Dropdown fields (the same custom dropdown as the header filters, styled as an input) */
+.field-dropdown {
+  position: relative;
+}
+.field-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  background: var(--field-bg);
+  color: var(--form-text);
+  font: inherit;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+.field-button .placeholder {
+  color: var(--field-placeholder);
+}
+.field-dropdown.open .chevron {
+  transform: rotate(180deg);
+}
+.field-dropdown .filter-menu:focus-visible {
+  outline: none; /* the highlighted option already shows where you are */
+}
+.field-dropdown .filter-menu {
+  right: 0;
+  width: auto;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
 .form-error {
   margin: 0;
   padding: 10px 12px;
@@ -333,16 +574,54 @@
   background: var(--accent-bg);
   color: var(--accent);
 }
+.event-form .form-error {
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #ffe4e5;
+  color: #9b2530;
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
 .event-form .button {
-  align-self: flex-start;
+  margin: 0;
+  padding: 12px 32px;
   border: 0;
+  border-radius: 999px;
+  background: var(--post-bg);
+  color: #ffffff;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: background-color 0.2s ease-in;
+}
+.event-form .button:hover:not(:disabled) {
+  background: var(--post-ledge);
 }
 .event-form .button:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+.event-form .secondary-button {
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: var(--field-bg);
+  color: var(--form-text);
+}
+.event-form .secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+@media (prefers-reduced-motion: reduce) {
+  .event-form input[type='radio'],
+  .event-form input[type='radio']::before,
+  .event-form .tag-option,
+  .event-form .button {
+    transition: none;
+  }
 }
 
 main {
@@ -364,6 +643,20 @@ main {
 main.home {
   max-width: none;
   padding: 0;
+}
+/* Event detail pages: a cream (Old Lace) background fills the whole page, the content stays centered.
+   Light mode only; its light color would make the dark theme's light text unreadable. */
+@media (prefers-color-scheme: light) {
+  main.cream {
+    max-width: none;
+    min-height: calc(100vh - 69px);
+    background: #fff8e9;
+  }
+  /* The header takes the page's cream so it blends into it */
+  .site-header.on-cream {
+    background: #fff8e9;
+    border-bottom-color: transparent;
+  }
 }
 .notice {
   margin: 0;
@@ -396,15 +689,51 @@ main.home {
     transform 0.4s ease,
     filter 0.3s ease;
 }
+/* Always visible: a strip of the tile's color at the bottom with distance, price and date.
+   On hover: the color fills the tile, the photo blurs, and the name and type appear. */
 .tile-info {
   position: absolute;
   inset: 0;
+  isolation: isolate; /* keeps the ::before/::after layers behind the text */
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 24px;
-  background: var(--tile-bg);
   color: var(--tile-text);
+}
+.tile-info::before,
+.tile-info::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  transition: opacity 0.2s ease;
+}
+.tile-info::before {
+  inset: 0;
+  background: var(--tile-bg);
+  opacity: 0;
+}
+.tile-info::after {
+  inset: auto 0 0;
+  height: 76px;
+  background: linear-gradient(transparent, var(--tile-strip) 45%);
+}
+.tile-info h2,
+.tile-type {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.tile:hover .tile-info::before,
+.tile:focus-visible .tile-info::before,
+.tile:hover .tile-info h2,
+.tile:focus-visible .tile-info h2,
+.tile:hover .tile-type,
+.tile:focus-visible .tile-type {
+  opacity: 1;
+}
+.tile:hover .tile-info::after,
+.tile:focus-visible .tile-info::after {
+  opacity: 0;
 }
 .tile:hover img,
 .tile:focus-visible img {
@@ -413,26 +742,32 @@ main.home {
 }
 
 /* Tiles cycle through the palette; with 5 colors and 4 columns, neighbours never match.
-   88% opacity keeps the text readable even over a bright photo. */
+   --tile-bg fills the tile on hover; --tile-strip is more opaque so the always-visible
+   details stay readable over the photo. */
 .tile:nth-child(5n + 1) {
   --tile-bg: rgba(255, 248, 233, 0.65);
   --tile-text: #123847;
+  --tile-strip: rgba(255, 248, 233, 0.9);
 } /* Old Lace */
 .tile:nth-child(5n + 2) {
   --tile-bg: rgba(254, 109, 115, 0.65);
   --tile-text: #0b2530;
+  --tile-strip: rgba(254, 109, 115, 0.9);
 } /* Grapefruit Pink */
 .tile:nth-child(5n + 3) {
   --tile-bg: rgba(255, 203, 119, 0.65);
   --tile-text: #123847;
+  --tile-strip: rgba(255, 203, 119, 0.9);
 } /* Apricot Cream */
 .tile:nth-child(5n + 4) {
   --tile-bg: rgba(36, 229, 210, 0.65);
   --tile-text: #0b2530;
+  --tile-strip: rgba(36, 229, 210, 0.9);
 } /* Turquoise */
 .tile:nth-child(5n + 5) {
   --tile-bg: rgba(29, 111, 141, 0.65);
   --tile-text: #ffffff;
+  --tile-strip: rgba(29, 111, 141, 0.9);
 } /* Cerulean, deepened for white text */
 .tile:focus-visible {
   outline: 3px solid var(--accent);
@@ -449,10 +784,12 @@ main.home {
   font-style: italic;
 }
 .tile-meta {
+  position: absolute;
+  inset: auto 16px 12px;
   display: flex;
   flex-wrap: wrap;
   gap: 4px 16px;
-  margin: auto 0 0;
+  margin: 0;
   font-size: 1.05rem;
   font-weight: 600;
 }
@@ -461,27 +798,30 @@ main.home {
   align-items: center;
   gap: 4px;
 }
-/* Touch screens can't hover: show a slim caption at the bottom instead */
+/* Touch screens can't hover: also show the name in the strip */
 @media (hover: none) {
   .tile-info {
-    inset: auto 0 0;
-    padding: 32px 14px 12px;
-    background: linear-gradient(transparent, var(--tile-bg) 40%);
+    justify-content: flex-end;
+    padding: 14px 14px 44px;
+  }
+  .tile-info::after {
+    height: 110px;
   }
   .tile-info h2 {
+    opacity: 1;
     font-size: 1.15rem;
   }
-  .tile-type {
-    font-size: 0.95rem;
-  }
   .tile-meta {
-    margin-top: 6px;
+    inset: auto 14px 12px;
     font-size: 0.95rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .tile img,
-  .tile-info {
+  .tile-info::before,
+  .tile-info::after,
+  .tile-info h2,
+  .tile-type {
     transition: none;
   }
   .tile:hover img,
@@ -494,10 +834,37 @@ main.home {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: var(--post-bg);
+  color: #ffffff;
   font-size: 0.8rem;
   font-weight: 600;
+}
+/* When / where / hours: an icon and its text per row, no box */
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+.facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.facts svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--post-bg);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .tags {
   display: flex;
@@ -556,12 +923,58 @@ main.home {
 .event-page .form-error {
   margin: 0 0 16px;
 }
-.event-page .hero {
+/* Rounded border around the poster, in a palette color chosen by EventPage */
+.hero-frame {
+  padding: 10px;
+  border-radius: 20px;
+  background: var(--frame-color, var(--post-bg));
+}
+/* Event detail: poster on the left, everything else on the right */
+.event-page.event-layout {
+  max-width: 1040px;
+}
+.event-body {
+  display: grid;
+  gap: 24px 40px;
+  align-items: start;
+}
+.event-body.has-poster {
+  grid-template-columns: minmax(240px, 380px) minmax(0, 1fr);
+}
+.event-info > :first-child {
+  margin-top: 0;
+}
+.poster {
+  position: relative;
+  aspect-ratio: 2 / 3; /* vertical poster */
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--card);
+}
+.poster img {
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
-  border-radius: 12px;
-  aspect-ratio: 16 / 9;
+  height: 100%;
+}
+/* Blurred copy fills any space the whole picture doesn't cover; scaled up so the blur's soft edge is hidden */
+.poster-bg {
   object-fit: cover;
-  margin-bottom: 16px;
+  filter: blur(24px);
+  transform: scale(1.25);
+}
+.poster-img {
+  object-fit: contain;
+}
+@media (max-width: 760px) {
+  .event-body.has-poster {
+    grid-template-columns: 1fr;
+  }
+  .hero-frame {
+    width: min(380px, 100%);
+    margin-inline: auto;
+  }
 }
 .event-page h1 {
   margin: 8px 0;
@@ -569,6 +982,14 @@ main.home {
 .event-page h2 {
   font-size: 1.1rem;
   margin-top: 24px;
+}
+.price {
+  margin: 12px 0 20px;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text-h);
 }
 .details {
   display: grid;
@@ -586,6 +1007,18 @@ main.home {
 }
 .details dd {
   margin: 0;
+}
+/* Pink, fully rounded buttons under an event (Open in Maps, Visit venue website) */
+.event-info .button {
+  margin-right: 8px;
+  border-radius: 999px;
+  background: var(--post-bg);
+  color: #ffffff;
+  transition: background-color 0.2s ease-in;
+}
+.event-info .button:hover,
+.event-info .button:focus-visible {
+  background: var(--post-ledge);
 }
 .button {
   display: inline-block;
@@ -657,4 +1090,133 @@ main.home {
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+/* My venues / My events lists: same look as the create/edit forms (blue text, pink links, pills) */
+.venues-page {
+  --form-text: #165a74;
+  --field-bg: #f7f7f7;
+  --field-border: #e6e6ea;
+  color: var(--form-text);
+}
+@media (prefers-color-scheme: dark) {
+  .venues-page {
+    --form-text: #bfe3ee;
+    --field-bg: #1d4a58;
+    --field-border: #2f6272;
+  }
+}
+.venues-page h1 {
+  margin-bottom: 8px;
+  color: var(--form-text);
+}
+.venues-page .muted {
+  color: var(--form-text);
+  opacity: 0.75;
+}
+.venues-page a:not(.button):not(.secondary-button) {
+  color: var(--post-bg);
+  font-weight: 600;
+}
+.venues-page .button {
+  margin: 0;
+  padding: 12px 28px;
+  border-radius: 999px;
+  background: var(--post-bg);
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.2s ease-in;
+}
+.venues-page .button:hover,
+.venues-page .button:focus-visible {
+  background: var(--post-ledge);
+}
+.venues-page .venue-item {
+  padding: 18px 24px;
+  border-color: var(--field-border);
+  border-radius: 24px;
+  box-shadow: 0 2px 10px var(--header-shadow);
+}
+.venues-page .venue-item strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--form-text);
+}
+.venues-page .secondary-button {
+  padding: 8px 20px;
+  border-color: var(--field-border);
+  border-radius: 999px;
+  background: var(--field-bg);
+  color: var(--form-text);
+  text-decoration: none;
+}
+.venues-page .secondary-button:hover {
+  border-color: var(--form-text);
+}
+.venues-page .secondary-button.danger {
+  color: var(--danger);
+}
+.venues-page .secondary-button.danger:hover {
+  border-color: var(--danger);
+}
+.venues-page .form-error {
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #ffe4e5;
+  color: #9b2530;
+}
+@media (prefers-reduced-motion: reduce) {
+  .venues-page .button {
+    transition: none;
+  }
+}
+
+/* My profile: same look as the forms and lists (blue text, pink links, rounded cards) */
+.profile-page {
+  --form-text: #165a74;
+  --field-border: #e6e6ea;
+  color: var(--form-text);
+}
+@media (prefers-color-scheme: dark) {
+  .profile-page {
+    --form-text: #bfe3ee;
+    --field-border: #2f6272;
+  }
+}
+.profile-page h1,
+.profile-page h2 {
+  color: var(--form-text);
+}
+.profile-page .muted {
+  color: var(--form-text);
+  opacity: 0.75;
+}
+.profile-page a {
+  color: var(--post-bg);
+  font-weight: 600;
+}
+.profile-page .profile-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 10px var(--header-shadow);
+}
+.profile-page .details {
+  padding: 20px 28px;
+  border-color: var(--field-border);
+  border-radius: 24px;
+  box-shadow: 0 2px 10px var(--header-shadow);
+}
+.profile-page .details dt {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--form-text);
+}
+.profile-page .details dd {
+  color: var(--form-text);
+}
+.profile-page .profile-events li::marker {
+  color: var(--post-bg);
 }

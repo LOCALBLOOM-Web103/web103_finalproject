@@ -4,20 +4,29 @@ import EventPage from './pages/EventPage.jsx'
 import EventForm from './pages/EventForm.jsx'
 import VenuesPage from './pages/VenuesPage.jsx'
 import VenueForm from './pages/VenueForm.jsx'
+import MyEventsPage from './pages/MyEventsPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import Filters from './components/Filters.jsx'
-import ResetButton from './components/ResetButton.jsx'
+import UserMenu from './components/UserMenu.jsx'
 import { LOGIN_URL, RequireAuth, useAuth } from './AuthContext.jsx'
 import './App.css'
 
 function App() {
   // On the home page the header doubles as the filter bar and the grid runs edge to edge
-  const isHome = useLocation().pathname === '/'
-  const { user, loading, logout } = useAuth()
+  const { pathname } = useLocation()
+  const isHome = pathname === '/'
+  // Event pages, the create/edit forms, the venue/event lists and the profile share the cream background
+  const isCream =
+    /^\/events\/\d+$/.test(pathname) ||
+    /^\/events\/(new|\d+\/edit)$/.test(pathname) ||
+    /^\/venues(\/(new|\d+\/edit))?$/.test(pathname) ||
+    pathname === '/my-events' ||
+    pathname === '/profile'
+  const { user, loading } = useAuth()
 
   return (
     <>
-      <header className="site-header">
+      <header className={`site-header${isCream ? ' on-cream' : ''}`}>
         <Link to="/" className="logo">
           Local Bloom
         </Link>
@@ -41,29 +50,7 @@ function App() {
           </Link>
           {!loading &&
             (user ? (
-              <>
-                <Link to="/venues" className="secondary-button">
-                  Manage venues
-                </Link>
-                <ResetButton />
-                <Link
-                  to="/profile"
-                  className="profile-link"
-                  aria-label="My profile"
-                >
-                  {user.avatar_url && (
-                    <img className="avatar" src={user.avatar_url} alt="" />
-                  )}
-                  <span className="username">{user.username}</span>
-                </Link>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={logout}
-                >
-                  Log out
-                </button>
-              </>
+              <UserMenu />
             ) : (
               <a href={LOGIN_URL} className="secondary-button">
                 Log in with GitHub
@@ -71,7 +58,7 @@ function App() {
             ))}
         </div>
       </header>
-      <main className={isHome ? 'home' : undefined}>
+      <main className={isHome ? 'home' : isCream ? 'cream' : undefined}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route
@@ -95,6 +82,14 @@ function App() {
             element={
               <RequireAuth>
                 <VenueForm key="edit" />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/my-events"
+            element={
+              <RequireAuth>
+                <MyEventsPage />
               </RequireAuth>
             }
           />
