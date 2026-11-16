@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import Dropdown from '../components/Dropdown.jsx'
 import TagPicker from '../components/TagPicker.jsx'
+import Loading from '../components/Loading.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -107,6 +109,8 @@ function EventForm() {
   const [loadError, setLoadError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [step, setStep] = useState(1) // the form has two pages
+  const step1Ref = useRef(null)
 
   useEffect(() => {
     Promise.all([
@@ -197,8 +201,25 @@ function EventForm() {
       setGeoLoading(false)
     }
   }
+  // Checks page 1 (the custom dropdowns can't use the browser's own "required" check)
+  const goNext = () => {
+    for (const field of step1Ref.current.querySelectorAll('input, textarea')) {
+      if (!field.checkValidity()) return field.reportValidity()
+    }
+    if (!form.activity_type_id)
+      return setSubmitError('Choose an activity type.')
+    if (venueMode === 'existing' && !form.venue_id)
+      return setSubmitError('Choose a venue.')
+    if (venueMode === 'new' && !newVenue.state)
+      return setSubmitError('Choose a state for the new venue.')
+    setSubmitError(null)
+    setStep(2)
+    window.scrollTo({ top: 0 })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (step === 1) return goNext() // Enter on page 1 goes to page 2 instead of submitting
     if (form.end_time <= form.start_time)
       return setSubmitError('End time must be after start time.')
 
@@ -250,7 +271,7 @@ function EventForm() {
         Couldn't load the form: {loadError}. <Link to="/">Back to events</Link>
       </p>
     )
-  if (!options) return <p className="status">Loading form…</p>
+  if (!options) return <Loading label="Loading form…" />
 
   return (
     <form className="event-form" onSubmit={handleSubmit}>
@@ -264,36 +285,31 @@ function EventForm() {
         </Link>
       )}
       <h1>{isEdit ? 'Edit event' : 'Post a new event'}</h1>
+      <p className="step-indicator">Step {step} of 2</p>
 
-      <div className="form-row">
+      {/* Page 1: the basics. Hidden (not removed) on page 2 so nothing typed is lost. */}
+      <div className="form-page" ref={step1Ref} hidden={step !== 1}>
         <label>
           Title
           <input required value={form.title} onChange={set('title')} />
         </label>
-        <label>
-          Activity type
-          <select
-            required
-            value={form.activity_type_id}
-            onChange={set('activity_type_id')}
-          >
-            <option value="" disabled>
-              Choose a type
-            </option>
-            {options.activityTypes.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
 
-      <section className="venue-section">
-        <div>
-          <fieldset>
-            <legend>Venue</legend>
-            <label>
+        <div className="field">
+          <span className="field-label">Activity type</span>
+          <Dropdown
+            variant="field"
+            label="Activity type"
+            placeholder="Choose a type"
+            value={form.activity_type_id}
+            options={options.activityTypes.map((a) => [String(a.id), a.name])}
+            onChange={(value) => setForm({ ...form, activity_type_id: value })}
+          />
+        </div>
+
+        <fieldset>
+          <legend>Venue</legend>
+          <div className="choices">
+            <label className="choice">
               <input
                 type="radio"
                 name="venueMode"
@@ -302,7 +318,7 @@ function EventForm() {
               />
               Select an existing venue
             </label>
-            <label>
+            <label className="choice">
               <input
                 type="radio"
                 name="venueMode"
@@ -311,101 +327,97 @@ function EventForm() {
               />
               Add a new venue
             </label>
-            {venueMode === 'existing' ? (
+          </div>
+          {venueMode === 'existing' ? (
+            <div className="field">
+              <span className="field-label">Venue</span>
+              <Dropdown
+                variant="field"
+                label="Venue"
+                placeholder="Choose a venue"
+                value={form.venue_id}
+                options={options.venues.map((v) => [
+                  String(v.id),
+                  `${v.name} (${v.city})`,
+                ])}
+                onChange={(value) => setForm({ ...form, venue_id: value })}
+              />
+              <div className="venue-management-link">
+                <Link to="/venues">Manage venues</Link>
+              </div>
+            </div>
+          ) : (
+            <div className="new-venue">
               <label>
-                <div className="venue-management-link">
-                  <Link to="/venues">Delete Venues</Link>
-                </div>
-                Venue
-                <select
+                Venue name
+                <input
                   required
-                  value={form.venue_id}
-                  onChange={set('venue_id')}
-                >
-                  <option value="" disabled>
-                    Choose a venue
-                  </option>
-                  {options.venues.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name} ({v.city})
-                    </option>
-                  ))}
-                </select>
+                  value={newVenue.name}
+                  onChange={updateVenue('name')}
+                />
               </label>
-            ) : (
-              <div>
-                <label>
-                  Venue name
-                  <input
-                    required
-                    value={newVenue.name}
-                    onChange={updateVenue('name')}
-                  />
-                </label>
-                <label>
-                  Street address
-                  <input
-                    required
-                    value={newVenue.address}
-                    onChange={updateVenue('address')}
-                  />
-                </label>
-                <label>
-                  City
-                  <input
-                    required
-                    value={newVenue.city}
-                    onChange={updateVenue('city')}
-                  />
-                </label>
-                <label>
-                  State
-                  <select
-                    required
-                    value={newVenue.state}
-                    onChange={updateVenue('state')}
-                  >
-                    <option value="" disabled>
-                      Choose a state
-                    </option>
-                    {US_STATES.map(([code, name]) => (
-                      <option key={code} value={code}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  ZIP code (optional)
-                  <input
-                    value={newVenue.zip_code}
-                    onChange={updateVenue('zip_code')}
-                    inputMode="numeric"
-                    pattern="[0-9]{5}(-[0-9]{4})?"
-                    placeholder="33312"
-                  />
-                </label>
-                <label>
-                  Website (optional)
-                  <input
-                    type="url"
-                    value={newVenue.website_url}
-                    onChange={updateVenue('website_url')}
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={findCoordinates}
-                  disabled={
-                    geoLoading ||
-                    !newVenue.address.trim() ||
-                    !newVenue.city.trim() ||
-                    !newVenue.state
+              <label>
+                Street address
+                <input
+                  required
+                  value={newVenue.address}
+                  onChange={updateVenue('address')}
+                />
+              </label>
+              <label>
+                City
+                <input
+                  required
+                  value={newVenue.city}
+                  onChange={updateVenue('city')}
+                />
+              </label>
+              <div className="field">
+                <span className="field-label">State</span>
+                <Dropdown
+                  variant="field"
+                  label="State"
+                  placeholder="Choose a state"
+                  value={newVenue.state}
+                  options={US_STATES}
+                  onChange={(value) =>
+                    updateVenue('state')({ target: { value } })
                   }
-                >
-                  {geoLoading ? 'Finding coordinates...' : 'Find coordinates'}
-                </button>
-                {geoStatus && <p role="status">{geoStatus}</p>}
+                />
+              </div>
+              <label>
+                ZIP code (optional)
+                <input
+                  value={newVenue.zip_code}
+                  onChange={updateVenue('zip_code')}
+                  inputMode="numeric"
+                  pattern="[0-9]{5}(-[0-9]{4})?"
+                  placeholder="33312"
+                />
+              </label>
+              <label>
+                Website (optional)
+                <input
+                  type="url"
+                  value={newVenue.website_url}
+                  onChange={updateVenue('website_url')}
+                />
+              </label>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={findCoordinates}
+                disabled={
+                  geoLoading ||
+                  !newVenue.address.trim() ||
+                  !newVenue.city.trim() ||
+                  !newVenue.state
+                }
+              >
+                {geoLoading ? 'Finding coordinates...' : 'Find coordinates'}
+              </button>
+              {geoStatus && <p role="status">{geoStatus}</p>}
+              <div className="form-row">
                 <label>
                   Latitude
                   <input
@@ -429,95 +441,119 @@ function EventForm() {
                   />
                 </label>
               </div>
-            )}
-          </fieldset>
-        </div>
-      </section>
+            </div>
+          )}
+        </fieldset>
 
-      <div className="form-row">
-        <label>
-          Starts
-          <input
-            type="datetime-local"
-            required
-            value={form.start_time}
-            onChange={set('start_time')}
-          />
-        </label>
-        <label>
-          Ends
-          <input
-            type="datetime-local"
-            required
-            min={form.start_time}
-            value={form.end_time}
-            onChange={set('end_time')}
-          />
-        </label>
-        <label>
-          Price ($)
-          <input
-            type="number"
-            required
-            min="0"
-            step="0.01"
-            value={form.price}
-            onChange={set('price')}
-          />
-        </label>
+        <TagPicker
+          tags={options.tags}
+          selected={form.tag_ids}
+          onToggle={toggleTag}
+        />
       </div>
 
-      <label>
-        Description
-        <textarea
-          rows="4"
-          value={form.description}
-          onChange={set('description')}
-        />
-      </label>
-      <label>
-        Picture URL (optional)
-        <input
-          type="url"
-          placeholder="https://example.com/event-photo.jpg"
-          value={form.image_url}
-          onChange={set('image_url')}
-        />
-      </label>
-      {form.image_url.trim() && (
-        <div className="event-image-preview">
-          <img
-            src={form.image_url.trim()}
-            alt="Event picture preview"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '250px',
-              objectFit: 'cover',
-              borderRadius: '8px',
-            }}
-          />
+      {/* Page 2: everything else, with the optional picture last */}
+      <div className="form-page" hidden={step !== 2}>
+        <div className="form-row">
+          <label>
+            Starts
+            <input
+              type="datetime-local"
+              required
+              value={form.start_time}
+              onChange={set('start_time')}
+            />
+          </label>
+          <label>
+            Ends
+            <input
+              type="datetime-local"
+              required
+              min={form.start_time}
+              value={form.end_time}
+              onChange={set('end_time')}
+            />
+          </label>
+          <label>
+            Price ($)
+            <input
+              type="number"
+              required
+              min="0"
+              step="0.01"
+              value={form.price}
+              onChange={set('price')}
+            />
+          </label>
         </div>
-      )}
 
-      <label>
-        What to bring
-        <input value={form.what_to_bring} onChange={set('what_to_bring')} />
-      </label>
+        <label>
+          Description
+          <textarea
+            rows="4"
+            value={form.description}
+            onChange={set('description')}
+          />
+        </label>
 
-      <TagPicker
-        tags={options.tags}
-        selected={form.tag_ids}
-        onToggle={toggleTag}
-      />
+        <label>
+          What to bring
+          <input value={form.what_to_bring} onChange={set('what_to_bring')} />
+        </label>
+
+        <label>
+          Picture URL (optional)
+          <input
+            type="url"
+            placeholder="https://example.com/event-photo.jpg"
+            value={form.image_url}
+            onChange={set('image_url')}
+          />
+        </label>
+        {form.image_url.trim() && (
+          <div className="event-image-preview">
+            <img
+              src={form.image_url.trim()}
+              alt="Event picture preview"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '250px',
+                objectFit: 'cover',
+                borderRadius: '16px',
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       {submitError && (
         <p className="form-error" role="alert">
           {submitError}
         </p>
       )}
-      <button type="submit" className="button" disabled={saving}>
-        {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post event'}
-      </button>
+      <div className="form-actions">
+        {step === 1 ? (
+          <button type="button" className="button" onClick={goNext}>
+            Next →
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setSubmitError(null)
+                setStep(1)
+              }}
+            >
+              ← Back
+            </button>
+            <button type="submit" className="button" disabled={saving}>
+              {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post event'}
+            </button>
+          </>
+        )}
+      </div>
     </form>
   )
 }

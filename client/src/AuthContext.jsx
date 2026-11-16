@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import Loading from './components/Loading.jsx'
 
 const AuthContext = createContext(null)
 
@@ -42,7 +43,7 @@ export function RequireAuth({ children }) {
     if (!loading && !user) window.location.assign(LOGIN_URL)
   }, [loading, user])
 
-  if (loading) return <p className="status">Checking login…</p>
-  if (!user) return <p className="status">Redirecting to GitHub login…</p>
+  if (loading) return <Loading label="Checking login…" />
+  if (!user) return <Loading label="Redirecting to GitHub login…" />
   return children
 }

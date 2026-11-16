@@ -75,6 +75,18 @@ https://imgur.com/a/uoApAau
 
 All submission and edit forms for organizers enforce strict client and server-side data validation before updating the database, requiring valid external URLs, structured address inputs, and standardized budget ranges.
 
+## Smoke Tests
+
+Read-only checks that every page and public API route responds. They never log in or write data, so they are safe to run against the live site.
+
+```bash
+cd server
+BASE_URL=https://<your-app>.onrender.com npm run smoke   # the deployed app
+npm run smoke                                            # defaults to http://localhost:3001
+```
+
+The deployed app's first request may be slow while Render wakes the service. The client must be built (`npm run build` in `client/`) for the server to serve the pages.
+
 ## Installation Instructions
 
 Requires [Node.js](https://nodejs.org/) 22 or newer and [PostgreSQL](https://www.postgresql.org/).

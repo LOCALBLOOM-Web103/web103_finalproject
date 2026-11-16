@@ -2,7 +2,17 @@ import { useEffect, useId, useRef, useState } from 'react'
 
 // A styled replacement for <select>, following the ARIA "select-only combobox/listbox" pattern:
 // Enter/Space/ArrowDown opens, arrows/Home/End move, Enter/Space picks, Escape/Tab closes.
-function Dropdown({ label, value, options, onChange }) {
+// variant "filter" (default): label and value inline, for the header filters.
+// variant "field": a form input; the visible label lives in the form, `placeholder` shows until a pick.
+function Dropdown({
+  label,
+  value,
+  options,
+  onChange,
+  variant = 'filter',
+  placeholder,
+}) {
+  const isField = variant === 'field'
   const id = useId()
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -10,11 +20,10 @@ function Dropdown({ label, value, options, onChange }) {
   const buttonRef = useRef(null)
   const listRef = useRef(null)
 
-  const selectedIndex = Math.max(
-    0,
-    options.findIndex(([v]) => v === value),
-  )
-  const selectedText = options[selectedIndex]?.[1] ?? ''
+  const foundIndex = options.findIndex(([v]) => v === value)
+  const selectedIndex = Math.max(0, foundIndex)
+  const selectedText =
+    foundIndex >= 0 ? options[foundIndex][1] : (placeholder ?? '')
 
   // Close when clicking anywhere outside
   useEffect(() => {
@@ -29,6 +38,14 @@ function Dropdown({ label, value, options, onChange }) {
   useEffect(() => {
     if (open) listRef.current?.focus()
   }, [open])
+
+  // Long lists (like the states) scroll; keep the highlighted option in view
+  useEffect(() => {
+    if (open)
+      listRef.current
+        ?.querySelector('.active')
+        ?.scrollIntoView({ block: 'nearest' })
+  }, [open, active])
 
   const openList = () => {
     setActive(selectedIndex)
@@ -71,22 +88,31 @@ function Dropdown({ label, value, options, onChange }) {
   }
 
   return (
-    <div className={`filter${open ? ' open' : ''}`} ref={rootRef}>
-      <span id={`${id}-label`} onClick={() => (open ? close() : openList())}>
+    <div
+      className={`${isField ? 'field-dropdown' : 'filter'}${open ? ' open' : ''}`}
+      ref={rootRef}
+    >
+      <span
+        id={`${id}-label`}
+        className={isField ? 'sr-only' : undefined}
+        onClick={() => (open ? close() : openList())}
+      >
         {label}
       </span>
       <button
         type="button"
         ref={buttonRef}
         id={`${id}-button`}
-        className="filter-button"
+        className={isField ? 'field-button' : 'filter-button'}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-labelledby={`${id}-label ${id}-button`}
         onClick={() => (open ? close() : openList())}
         onKeyDown={onButtonKeyDown}
       >
-        {selectedText}
+        <span className={foundIndex < 0 ? 'placeholder' : undefined}>
+          {selectedText}
+        </span>
         <svg
           className="chevron"
           viewBox="0 0 24 24"
@@ -117,7 +143,7 @@ function Dropdown({ label, value, options, onChange }) {
               key={optValue}
               id={`${id}-opt-${i}`}
               role="option"
-              aria-selected={i === selectedIndex}
+              aria-selected={i === foundIndex}
               className={i === active ? 'active' : undefined}
               onMouseEnter={() => setActive(i)}
               onClick={() => pick(i)}
