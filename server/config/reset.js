@@ -5,7 +5,7 @@ const dataFile = fileURLToPath(new URL('./data.json', import.meta.url))
 const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'))
 
 const schema = `
-  DROP TABLE IF EXISTS event_images, event_tags, events, tags, activity_types, venues, profiles, users CASCADE;
+  DROP TABLE IF EXISTS saved_events, event_images, event_tags, events, tags, activity_types, venues, profiles, users CASCADE;
 
   CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -65,6 +65,15 @@ const schema = `
     event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (event_id, tag_id)
+  );
+
+  -- Many-to-many join between users and events; saved_at and note are the join table's own fields
+  CREATE TABLE saved_events (
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+    saved_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    note TEXT CHECK (char_length(note) <= 280),
+    PRIMARY KEY (user_id, event_id)
   );
 
   CREATE TABLE event_images (
@@ -408,7 +417,7 @@ export async function resetDemoData(pool) {
   try {
     await client.query('BEGIN')
     await client.query(`
-      TRUNCATE event_images, event_tags, events, tags, activity_types, venues RESTART IDENTITY;
+      TRUNCATE saved_events, event_images, event_tags, events, tags, activity_types, venues RESTART IDENTITY;
       DELETE FROM users WHERE github_id IS NULL;
     `)
     await seedDatabase(client)

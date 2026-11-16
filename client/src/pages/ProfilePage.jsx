@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatShortDate } from '../format.js'
 import Loading from '../components/Loading.jsx'
+import SavedNote from '../components/SavedNote.jsx'
 
 // Container + view for /profile (wrapped in RequireAuth in App.jsx)
 function ProfilePage() {
@@ -71,6 +72,27 @@ function ProfilePage() {
         <p>
           You haven't posted any events yet.{' '}
           <Link to="/events/new">Post one</Link>
+        </p>
+      )}
+
+      <h2>My saved events ({profile.saved.length})</h2>
+      {profile.saved.length ? (
+        <ul className="profile-events">
+          {profile.saved.map((event) => (
+            <li key={event.id}>
+              <Link to={`/events/${event.id}`}>{event.title}</Link>{' '}
+              <span className="muted">
+                {formatShortDate(event.start_time)} · saved{' '}
+                {formatShortDate(event.saved_at)}
+              </span>
+              <SavedNote eventId={event.id} initialNote={event.note} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>
+          No saved events yet. Tap <strong>☆ Save</strong> on any event to keep
+          it here.
         </p>
       )}
     </article>

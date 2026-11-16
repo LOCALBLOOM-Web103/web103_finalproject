@@ -5,17 +5,17 @@ CodePath WEB103 Final Project
 Designed and developed by: 
 Jean Pierre Joseph, Paola Cuevas, Thy Tran
 
-🔗 Link to deployed app:
+🔗 Link to deployed app: https://web103-finalproject-bkmi.onrender.com
 
 ## About
 
 ### Description and Purpose
 
-Local Bloom is a community exploration platform designed to help creatives and locals discover independent art businesses, craft supply shops, cozy cafes, indie bookstores, or hands-on creative workshops. Many unique small businesses and local craft gatherings lack high-visibility marketing channels and get buried by large commercial chains on conventional map services. CraftSpot solves this by providing a curated directory where users can search, explore, and filter hidden gems by activity type, distance, and budget tier ($ to $$$). Users can view comprehensive details about each location or event, while business owners and event organizers can list their venues and post upcoming workshops.
+Local Bloom is a community exploration platform designed to help creatives and locals discover independent art businesses, craft supply shops, cozy cafes, indie bookstores, or hands-on creative workshops. Many unique small businesses and local craft gatherings lack high-visibility marketing channels and get buried by large commercial chains on conventional map services. Local Bloom solves this by providing a curated directory where users can search, explore, and filter hidden gems by activity type, distance, and budget tier ($ to $$$). Users can view comprehensive details about each location or event, while business owners and event organizers can list their venues and post upcoming workshops.
 
 ### Inspiration
 
-As makers and art enthusiasts, finding affordable materials and local creative workshops often requires digging through fragmented social media posts, scattered forums, or word-of-mouth recommendations. We wanted to build a centralized, community-driven hub that bridges the gap between independent artisans and local residents looking for creative outlets. By spotlighting small, independent businesses—from pottery studios and secondhand craft supply stores to indie bookstores hosting open mic nights—CraftSpot fosters local creative economies and makes hands-on arts accessible to everyone.
+As makers and art enthusiasts, finding affordable materials and local creative workshops often requires digging through fragmented social media posts, scattered forums, or word-of-mouth recommendations. We wanted to build a centralized, community-driven hub that bridges the gap between independent artisans and local residents looking for creative outlets. By spotlighting small, independent businesses—from pottery studios and secondhand craft supply stores to indie bookstores hosting open mic nights—Local Bloom fosters local creative economies and makes hands-on arts accessible to everyone.
 
 ## Tech Stack
 
@@ -29,7 +29,7 @@ Backend: Node.js, Express.js, PostgreSQL, Render
 
 Users can dynamically filter local businesses and creative events by activity type, distance/radius, and budget tier ($ to $$$) without leaving the discovery dashboard.
 
-*Completed in Milestone 4: filtering by activity type, budget tier, and tag. The distance/radius filter is planned for Milestone 5.*
+*Milestone 4: filtering by activity type, budget tier, and tag. Milestone 5: added the distance/radius filter, which uses the browser's location. The redesigned header shows the price, activity type, and distance filters; filtering by tag still works through the API (`/api/events?tag=pottery`).*
 
 <img src='./client/src/assets/filter.gif' title='Search & Filter' width='' alt='Filtering the dashboard by activity type, budget tier, and tag' />
 
@@ -46,7 +46,7 @@ Each business and event features a dedicated dynamic detail page showcasing oper
 
 Business owners and event organizers have access to a dedicated management interface where they can register new events, edit existing details , and delete obsolete events or venue pages.
 
-*Completed in Milestone 4: create, edit, and delete events. Venue pages are planned for a later milestone.*
+*Milestone 4: create, edit, and delete events. Milestone 5: organizers log in with GitHub, only an event's creator can edit or delete it, new venues can be added from the event form, and venue owners can delete unused venues at `/venues`. Separate venue detail pages were cut.*
 
 <img src='./client/src/assets/create-edit-delete.gif' title='Event Submission & Management' width='' alt='Posting a new event, editing it, and deleting it' />
 
@@ -89,4 +89,61 @@ The deployed app's first request may be slow while Render wakes the service. The
 
 ## Installation Instructions
 
-[instructions go here]
+Requires [Node.js](https://nodejs.org/) 22 or newer and [PostgreSQL](https://www.postgresql.org/).
+
+1. **Clone and install**
+
+   ```bash
+   git clone https://github.com/LOCALBLOOM-Web103/web103_finalproject.git
+   cd web103_finalproject
+   npm install --prefix server
+   npm install --prefix client
+   ```
+
+2. **Create a database** named `localbloom`:
+
+   ```bash
+   createdb localbloom
+   ```
+
+   (or run `CREATE DATABASE localbloom;` in `psql`)
+
+3. **Create a GitHub OAuth app** at GitHub → Settings → Developer settings → OAuth Apps → New OAuth App:
+   - Homepage URL: `http://localhost:5173`
+   - Redirect URI: `http://localhost:5173/auth/github/callback`
+
+   Copy the Client ID, then generate and copy a client secret.
+
+4. **Set up `server/.env`**: copy `server/.env.example` to `server/.env` and fill in:
+
+   | Variable | Value |
+   |---|---|
+   | `DATABASE_URL` | `postgresql://postgres:<your-password>@localhost:5432/localbloom` |
+   | `SESSION_SECRET` | output of `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+   | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | from step 3 |
+   | `GITHUB_CALLBACK_URL` | `http://localhost:5173/auth/github/callback` |
+
+5. **Create the tables and load the sample data** (this deletes any existing Local Bloom data):
+
+   ```bash
+   cd server
+   # macOS / Linux / Git Bash
+   LOCALBLOOM_CONFIRM_RESET=DELETE_AND_RESEED_LOCALBLOOM npm run reset -- --execute-reset
+   # Windows PowerShell
+   $env:LOCALBLOOM_CONFIRM_RESET="DELETE_AND_RESEED_LOCALBLOOM"; npm run reset -- --execute-reset
+   ```
+
+6. **Run the app** in two terminals from the project root:
+
+   ```bash
+   npm run dev --prefix server   # API on http://localhost:3001
+   npm run dev --prefix client   # app on http://localhost:5173
+   ```
+
+   Open http://localhost:5173 and log in with GitHub. Once logged in, the **Reset demo data** button in the header restores the sample data at any time.
+
+### Deploying to Render
+
+- Build command: `npm run build` · Start command: `npm start`
+- Environment variables: the same as `server/.env`, plus `NODE_ENV=production`. Use the database's **Internal** URL for `DATABASE_URL` and `https://<your-app>.onrender.com/auth/github/callback` for `GITHUB_CALLBACK_URL` (add it as a second redirect URI on the GitHub OAuth app).
+- Create the tables once from your computer by running step 5 with `DATABASE_URL` set to the database's **External** URL.

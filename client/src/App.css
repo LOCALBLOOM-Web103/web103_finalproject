@@ -159,6 +159,22 @@
   padding-left: 20px;
   line-height: 1.8;
 }
+/* Note field under each saved event on the profile */
+.saved-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+.saved-note input {
+  flex: 1;
+  max-width: 420px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.9rem;
+}
 /* Raised 3D button: the darker ledge is a solid shadow; pressing pushes the face down onto it */
 .post-button {
   display: inline-flex;
@@ -924,6 +940,10 @@ main.home {
 .secondary-button.danger:hover {
   border-color: var(--danger);
 }
+.secondary-button.saved {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .secondary-button:disabled {
   opacity: 0.6;
   cursor: wait;
@@ -1259,5 +1279,64 @@ main.home {
 @keyframes flower-pulse {
   50% {
     opacity: 0.4;
+  }
+}
+
+/* Save, Edit and Delete on the event page: pill buttons like the rest of the site */
+.event-page .event-actions {
+  align-items: center;
+}
+.event-page .event-actions .secondary-button {
+  padding: 8px 20px;
+  border-color: #e6e6ea;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #165a74;
+}
+.event-page .event-actions .secondary-button:hover {
+  border-color: #165a74;
+}
+.event-page .event-actions .secondary-button.danger {
+  color: var(--danger);
+}
+.event-page .event-actions .secondary-button.danger:hover {
+  border-color: var(--danger);
+}
+/* Saved: filled pink, like the Post button */
+.event-page .event-actions .secondary-button.saved {
+  border-color: transparent;
+  background: var(--post-bg);
+  color: #ffffff;
+}
+.event-page .event-actions .form-error {
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+/* Note field on My profile's saved events: a pill, like the form fields */
+.profile-page .saved-note input {
+  padding: 8px 18px;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  background: #f7f7f7;
+  color: var(--form-text);
+}
+.profile-page .saved-note input::placeholder {
+  color: #9bb3bd;
+}
+.profile-page .saved-note input:focus-visible {
+  outline: 2px solid #2584a7;
+  outline-offset: 2px;
+}
+.profile-page .saved-note .form-error {
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: #ffe4e5;
+  color: #9b2530;
+}
+@media (prefers-color-scheme: dark) {
+  .profile-page .saved-note input {
+    background: #1d4a58;
   }
 }
