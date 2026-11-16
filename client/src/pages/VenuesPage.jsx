@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Loading from '../components/Loading.jsx'
 
 function VenuesPage() {
   const [venues, setVenues] = useState([])
@@ -105,7 +106,7 @@ function VenuesPage() {
       {message && <p role="status">{message}</p>}
 
       {loading ? (
-        <p>Loading venues...</p>
+        <Loading label="Loading venues…" />
       ) : venues.length === 0 ? (
         <p>You haven't added any venues yet.</p>
       ) : (

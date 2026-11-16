@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Dropdown from '../components/Dropdown.jsx'
 import TagPicker from '../components/TagPicker.jsx'
+import Loading from '../components/Loading.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -270,7 +271,7 @@ function EventForm() {
         Couldn't load the form: {loadError}. <Link to="/">Back to events</Link>
       </p>
     )
-  if (!options) return <p className="status">Loading form…</p>
+  if (!options) return <Loading label="Loading form…" />
 
   return (
     <form className="event-form" onSubmit={handleSubmit}>

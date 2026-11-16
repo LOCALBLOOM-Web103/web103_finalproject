@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { milesBetween } from '../format.js'
 import EventCard from '../components/EventCard.jsx'
+import Loading from '../components/Loading.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -60,7 +61,7 @@ function Dashboard() {
   }, [query])
 
   if (error) return <p className="status">Couldn't load events: {error}</p>
-  if (!events) return <p className="status">Loading events…</p>
+  if (!events) return <Loading label="Loading events…" />
 
   const withDistance = events.map((event) => ({
     ...event,

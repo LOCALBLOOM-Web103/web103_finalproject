@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../AuthContext.jsx'
+import Loading from '../components/Loading.jsx'
 
 const EMPTY = {
   name: '',
@@ -89,7 +90,7 @@ function VenueForm() {
         {loadError}. <Link to="/venues">Back to my venues</Link>
       </p>
     )
-  if (!form) return <p className="status">Loading venue…</p>
+  if (!form) return <Loading label="Loading venue…" />
 
   return (
     <form className="event-form" onSubmit={submit}>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { formatDate } from '../format.js'
 import { useAuth } from '../AuthContext.jsx'
+import Loading from '../components/Loading.jsx'
 
 // Poster border colors: the dashboard tile palette. Old Lace is left out because it would
 // disappear against the page's cream background.
@@ -72,7 +73,7 @@ function EventPage() {
         {error}. <Link to="/">Back to events</Link>
       </p>
     )
-  if (!event) return <p className="status">Loading event…</p>
+  if (!event) return <Loading label="Loading event…" />
 
   const price = Number(event.price)
   // Only the creator sees Edit/Delete; the server enforces the same rule with a 403

@@ -9,6 +9,7 @@ import ProfilePage from './pages/ProfilePage.jsx'
 import Filters from './components/Filters.jsx'
 import UserMenu from './components/UserMenu.jsx'
 import { LOGIN_URL, RequireAuth, useAuth } from './AuthContext.jsx'
+import logo from './assets/logo.svg'
 import './App.css'
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
     <>
       <header className={`site-header${isCream ? ' on-cream' : ''}`}>
         <Link to="/" className="logo">
+          <img className="logo-mark" src={logo} alt="" />
           Local Bloom
         </Link>
         {isHome && <Filters />}

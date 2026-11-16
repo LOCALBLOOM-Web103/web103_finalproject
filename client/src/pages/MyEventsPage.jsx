@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatShortDate } from '../format.js'
+import Loading from '../components/Loading.jsx'
 
 // Container + view for /my-events (wrapped in RequireAuth in App.jsx): the events you posted
 function MyEventsPage() {
@@ -37,7 +38,7 @@ function MyEventsPage() {
     }
   }
 
-  if (!events && !error) return <p className="status">Loading events…</p>
+  if (!events && !error) return <Loading label="Loading events…" />
 
   return (
     <section className="venues-page">
