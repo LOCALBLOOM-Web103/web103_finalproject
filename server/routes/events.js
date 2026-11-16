@@ -56,10 +56,11 @@ const eventQuery = `
   LEFT JOIN tags t ON t.id = et.tag_id
 `
 
-// Keep in sync with priceTier() in client/src/format.js
+// Matches the price filter in client/src/components/Filters.jsx. "$" (under $25) includes
+// free events, so it differs from priceTier() in client/src/format.js, which labels free as its own tier.
 const tierRanges = {
   free: 'e.price = 0',
-  $: 'e.price > 0 AND e.price < 25',
+  $: 'e.price < 25',
   $$: 'e.price >= 25 AND e.price < 60',
   $$$: 'e.price >= 60',
 }
