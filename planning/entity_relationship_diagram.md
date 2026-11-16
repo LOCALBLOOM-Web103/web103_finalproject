@@ -11,7 +11,7 @@ Reference the Creating an Entity Relationship Diagram final project guide in the
 - **activity_types**: the single activity type for each event (Workshop, Open Mic, Class, ...), which powers the "All activity types" filter
 - **tags**: descriptive labels shared across events (pottery, beginner-friendly, kid-friendly, ...)
 - **event_tags**: join table that links events and tags (many-to-many)
-- **saved_events**: join table of events each user has saved (many-to-many), with its own `saved_at` field
+- **saved_events**: join table of events each user has saved (many-to-many), with its own `saved_at` and `note` fields
 - **event_images**: photos shown in the event page carousel
 
 ## Add the Entity Relationship Diagram
@@ -84,6 +84,7 @@ erDiagram
         int user_id PK, FK
         int event_id PK, FK
         timestamp saved_at
+        text note
     }
     event_images {
         int id PK
@@ -172,6 +173,7 @@ erDiagram
 | user_id | integer | foreign key → users.id; part of the primary key |
 | event_id | integer | foreign key → events.id; part of the primary key |
 | saved_at | timestamp | when the user saved the event (the join table's own field) |
+| note | text | optional private note on the saved event, up to 280 characters |
 
 ### event_images
 

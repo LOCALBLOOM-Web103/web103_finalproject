@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatShortDate } from '../format.js'
+import SavedNote from '../components/SavedNote.jsx'
 
 // Container + view for /profile (wrapped in RequireAuth in App.jsx)
 function ProfilePage() {
@@ -83,6 +84,7 @@ function ProfilePage() {
                 {formatShortDate(event.start_time)} · saved{' '}
                 {formatShortDate(event.saved_at)}
               </span>
+              <SavedNote eventId={event.id} initialNote={event.note} />
             </li>
           ))}
         </ul>

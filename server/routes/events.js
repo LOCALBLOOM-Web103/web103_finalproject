@@ -129,19 +129,32 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// POST /api/events/:id/save  save an event for the logged-in user (saving twice is fine)
+// POST /api/events/:id/save  body (optional): { note }
+// Saves an event for the logged-in user (saving twice is fine) and sets its note
 router.post('/:id/save', requireAuth, async (req, res) => {
   const id = Number(req.params.id)
   if (!Number.isInteger(id))
     return res.status(400).json({ error: 'Event id must be an integer' })
 
+  // Optional private note. Leaving it out keeps the current note (so re-saving
+  // never erases it); sending '' or null clears it.
+  const { note } = req.body ?? {}
+  if (note != null && typeof note !== 'string')
+    return res.status(400).json({ error: 'note must be a string' })
+  const cleanNote = note?.trim() || null
+  if (cleanNote && cleanNote.length > 280)
+    return res
+      .status(400)
+      .json({ error: 'note must be 280 characters or fewer' })
+
   try {
     await pool.query(
-      `INSERT INTO saved_events (user_id, event_id) VALUES ($1, $2)
-       ON CONFLICT (user_id, event_id) DO NOTHING`,
-      [req.user.id, id],
+      `INSERT INTO saved_events (user_id, event_id, note) VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, event_id) DO UPDATE
+         SET note = CASE WHEN $4 THEN EXCLUDED.note ELSE saved_events.note END`,
+      [req.user.id, id, cleanNote, note !== undefined],
     )
-    res.status(201).json({ saved: true })
+    res.status(201).json({ saved: true, note: cleanNote })
   } catch (err) {
     // 23503 = foreign key violation: no event with this id
     if (err.code === '23503')

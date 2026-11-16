@@ -63,6 +63,21 @@
   padding-left: 20px;
   line-height: 1.8;
 }
+.saved-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+.saved-note input {
+  flex: 1;
+  max-width: 420px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.9rem;
+}
 @media (max-width: 600px) {
   .username {
     display: none;
