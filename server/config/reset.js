@@ -67,11 +67,12 @@ const schema = `
     PRIMARY KEY (event_id, tag_id)
   );
 
-  -- Many-to-many join between users and events; saved_at is the join table's own field
+  -- Many-to-many join between users and events; saved_at and note are the join table's own fields
   CREATE TABLE saved_events (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
     saved_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    note TEXT CHECK (char_length(note) <= 280),
     PRIMARY KEY (user_id, event_id)
   );
 

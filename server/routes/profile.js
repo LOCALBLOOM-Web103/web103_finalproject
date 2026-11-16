@@ -22,7 +22,7 @@ router.get('/', requireAuth, async (req, res) => {
       [req.user.id],
     )
     const { rows: saved } = await pool.query(
-      `SELECT e.id, e.title, e.start_time, s.saved_at
+      `SELECT e.id, e.title, e.start_time, s.saved_at, s.note
        FROM saved_events s JOIN events e ON e.id = s.event_id
        WHERE s.user_id = $1 ORDER BY s.saved_at DESC`,
       [req.user.id],
