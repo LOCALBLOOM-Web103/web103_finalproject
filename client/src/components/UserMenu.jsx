@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../AuthContext.jsx'
+import { useConfirm } from '../ConfirmContext.jsx'
 
 // Avatar button in the header that opens the account menu
 function UserMenu() {
   const { user, logout } = useAuth()
+  const confirm = useConfirm()
   const [open, setOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
   const rootRef = useRef(null)
@@ -58,9 +60,12 @@ function UserMenu() {
   async function resetDemoData() {
     close()
     if (
-      !window.confirm(
-        'Reset demo data? All events and venues go back to the original sample data, and any you posted are deleted.',
-      )
+      !(await confirm({
+        title: 'Reset demo data?',
+        message:
+          'All events and venues go back to the original sample data, and any you posted are deleted.',
+        confirmLabel: 'Reset',
+      }))
     )
       return
     setResetting(true)

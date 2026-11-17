@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatShortDate } from '../format.js'
 import Loading from '../components/Loading.jsx'
+import { useConfirm } from '../ConfirmContext.jsx'
 
 // Container + view for /my-events (wrapped in RequireAuth in App.jsx): the events you posted
 function MyEventsPage() {
+  const confirm = useConfirm()
   const [events, setEvents] = useState(null)
   const [error, setError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -21,7 +23,13 @@ function MyEventsPage() {
   }, [])
 
   async function deleteEvent(event) {
-    if (!window.confirm(`Delete "${event.title}"? This can't be undone.`))
+    if (
+      !(await confirm({
+        title: `Delete "${event.title}"?`,
+        message: "This can't be undone.",
+        confirmLabel: 'Delete',
+      }))
+    )
       return
     setDeletingId(event.id)
     setError(null)

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Loading from '../components/Loading.jsx'
+import { useConfirm } from '../ConfirmContext.jsx'
 
 function VenuesPage() {
+  const confirm = useConfirm()
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -42,10 +44,12 @@ function VenuesPage() {
   }, [])
 
   async function deleteVenue(venue) {
-    const confirmed = window.confirm(
-      `Delete "${venue.name}" (ID ${venue.id})?\n\n` +
+    const confirmed = await confirm({
+      title: `Delete "${venue.name}"?`,
+      message:
         'This action cannot be undone. Venues with associated events cannot be deleted.',
-    )
+      confirmLabel: 'Delete',
+    })
 
     if (!confirmed) return
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { formatDate } from '../format.js'
 import { useAuth } from '../AuthContext.jsx'
+import { useConfirm } from '../ConfirmContext.jsx'
 import Loading from '../components/Loading.jsx'
 import SaveButton from '../components/SaveButton.jsx'
 
@@ -29,13 +30,20 @@ function EventPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const confirm = useConfirm()
   const [event, setEvent] = useState(null)
   const [error, setError] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete "${event.title}"? This can't be undone.`))
+    if (
+      !(await confirm({
+        title: `Delete "${event.title}"?`,
+        message: "This can't be undone.",
+        confirmLabel: 'Delete',
+      }))
+    )
       return
     setDeleting(true)
     setDeleteError(null)
