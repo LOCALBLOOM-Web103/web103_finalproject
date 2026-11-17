@@ -1340,3 +1340,50 @@ main.home {
     background: #1d4a58;
   }
 }
+
+/* Confirm modal (ConfirmContext.jsx): native <dialog> opened with showModal() */
+.confirm-modal {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 20px 50px var(--header-shadow);
+}
+.confirm-modal::backdrop {
+  background: rgba(18, 56, 71, 0.45);
+}
+.confirm-modal[open] {
+  animation: confirm-pop 0.15s ease-out;
+}
+@keyframes confirm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+.confirm-modal-body {
+  padding: 24px;
+}
+.confirm-modal-body h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--text-h);
+}
+.confirm-modal-body p {
+  margin: 0;
+  color: var(--muted);
+}
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirm-modal[open] {
+    animation: none;
+  }
+}
