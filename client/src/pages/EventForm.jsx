@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import DateTimeField from '../components/DateTimeField.jsx'
 import Dropdown from '../components/Dropdown.jsx'
 import TagPicker from '../components/TagPicker.jsx'
 import Loading from '../components/Loading.jsx'
@@ -270,6 +271,11 @@ function EventForm() {
     e.preventDefault()
     if (step === 1) return goNext() // Enter on page 1 goes to page 2 instead of submitting
     if (uploading) return // saving now would drop the picture that's still uploading
+    // The date and time fields leave '' until both a date and a valid time are filled in
+    if (!form.start_time || !form.end_time)
+      return setSubmitError(
+        'Choose a date and a time (like 6:30 PM) for both start and end.',
+      )
     if (form.end_time <= form.start_time)
       return setSubmitError('End time must be after start time.')
 
@@ -506,25 +512,19 @@ function EventForm() {
       {/* Page 2: everything else, with the optional picture last */}
       <div className="form-page" hidden={step !== 2}>
         <div className="form-row">
-          <label>
-            Starts
-            <input
-              type="datetime-local"
-              required
-              value={form.start_time}
-              onChange={set('start_time')}
-            />
-          </label>
-          <label>
-            Ends
-            <input
-              type="datetime-local"
-              required
-              min={form.start_time}
-              value={form.end_time}
-              onChange={set('end_time')}
-            />
-          </label>
+          <DateTimeField
+            label="Starts"
+            value={form.start_time}
+            onChange={(value) => setForm((f) => ({ ...f, start_time: value }))}
+          />
+          <DateTimeField
+            label="Ends"
+            value={form.end_time}
+            minDate={form.start_time.slice(0, 10) || undefined}
+            onChange={(value) => setForm((f) => ({ ...f, end_time: value }))}
+          />
+        </div>
+        <div className="form-row">
           <label>
             Price ($)
             <input

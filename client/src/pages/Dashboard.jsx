@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { milesBetween } from '../format.js'
 import EventCard from '../components/EventCard.jsx'
+import EventModal from '../components/EventModal.jsx'
 import Loading from '../components/Loading.jsx'
 
 const getJson = (url) =>
@@ -41,6 +42,7 @@ function Dashboard() {
 
   const [events, setEvents] = useState(null)
   const [error, setError] = useState(null)
+  const [selected, setSelected] = useState(null) // event shown in the quick-view modal
   const { location, unavailable } = useUserLocation()
 
   useEffect(() => {
@@ -92,9 +94,17 @@ function Dashboard() {
       ) : (
         <div className="tile-grid">
           {visible.map((event) => (
-            <EventCard key={event.id} event={event} distance={event.distance} />
+            <EventCard
+              key={event.id}
+              event={event}
+              distance={event.distance}
+              onOpen={setSelected}
+            />
           ))}
         </div>
+      )}
+      {selected && (
+        <EventModal event={selected} onClose={() => setSelected(null)} />
       )}
     </>
   )

@@ -35,3 +35,29 @@ export function milesBetween(a, b) {
     Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2
   return 3958.8 * 2 * Math.asin(Math.sqrt(h))
 }
+
+// e.g. "Sunday, November 8"
+export function formatDay(timestamp) {
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+// e.g. "6:00 PM – 8:00 PM"; when the event ends on another day, the end gets its date too
+export function formatTimeRange(start, end) {
+  const time = { hour: 'numeric', minute: '2-digit' }
+  const from = new Date(start)
+  const to = new Date(end)
+  const endText =
+    from.toDateString() === to.toDateString()
+      ? to.toLocaleTimeString(undefined, time)
+      : to.toLocaleString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          ...time,
+        })
+  return `${from.toLocaleTimeString(undefined, time)} – ${endText}`
+}
