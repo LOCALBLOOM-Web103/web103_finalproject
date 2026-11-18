@@ -18,10 +18,19 @@ function PinIcon() {
   )
 }
 
-// Presenter: one tile in the home grid. distance is in miles, or null when unknown.
-function EventCard({ event, distance }) {
+// Presenter: one tile in the home grid. distance is in miles, or null when unknown;
+// onOpen(event) is called when the tile is clicked.
+function EventCard({ event, distance, onOpen }) {
+  // A plain click opens the quick-view modal; modified clicks (new tab, etc.) follow the link
+  const handleClick = (e) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+      return
+    e.preventDefault()
+    onOpen(event)
+  }
+
   return (
-    <Link to={`/events/${event.id}`} className="tile">
+    <Link to={`/events/${event.id}`} className="tile" onClick={handleClick}>
       {event.images[0] ? (
         <img src={event.images[0]} alt="" loading="lazy" />
       ) : (
