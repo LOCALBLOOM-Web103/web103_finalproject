@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Dropdown from '../components/Dropdown.jsx'
 import TagPicker from '../components/TagPicker.jsx'
 import Loading from '../components/Loading.jsx'
+import { useToast } from '../ToastContext.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -107,6 +108,7 @@ function EventForm() {
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
+  const toast = useToast()
   const [form, setForm] = useState(emptyEvent)
   const [options, setOptions] = useState(null) // { venues, activityTypes, tags }
   const [loadError, setLoadError] = useState(null)
@@ -256,6 +258,7 @@ function EventForm() {
           uploaded.error?.message || 'Upload to Cloudinary failed',
         )
       setForm((f) => ({ ...f, image_url: uploaded.secure_url }))
+      toast('Picture uploaded')
     } catch (err) {
       setSubmitError(err.message)
     } finally {
@@ -305,6 +308,7 @@ function EventForm() {
       const body = await res.json()
       if (!res.ok)
         throw new Error(body.error || `Request failed (${res.status})`)
+      toast(isEdit ? 'Changes saved' : 'Event posted')
       navigate(`/events/${body.id}`)
     } catch (err) {
       setSubmitError(err.message)

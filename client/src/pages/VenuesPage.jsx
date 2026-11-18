@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Loading from '../components/Loading.jsx'
 import { useConfirm } from '../ConfirmContext.jsx'
+import { useToast } from '../ToastContext.jsx'
 
 function VenuesPage() {
   const confirm = useConfirm()
+  const toast = useToast()
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
   const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
@@ -54,8 +55,6 @@ function VenuesPage() {
     if (!confirmed) return
 
     setDeletingId(venue.id)
-    setError('')
-    setMessage('')
 
     try {
       const response = await fetch(`/api/venues/${venue.id}`, {
@@ -84,9 +83,9 @@ function VenuesPage() {
       }
 
       setVenues((current) => current.filter((item) => item.id !== venue.id))
-      setMessage(`Deleted "${venue.name}" (ID ${venue.id}).`)
+      toast(`Deleted "${venue.name}"`)
     } catch (err) {
-      setError(err.message)
+      toast(err.message, 'error')
     } finally {
       setDeletingId(null)
     }
@@ -107,7 +106,6 @@ function VenuesPage() {
           {error}
         </p>
       )}
-      {message && <p role="status">{message}</p>}
 
       {loading ? (
         <Loading label="Loading venues…" />

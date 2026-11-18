@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../AuthContext.jsx'
 import { useConfirm } from '../ConfirmContext.jsx'
+import { flashToast, useToast } from '../ToastContext.jsx'
 
 // Avatar button in the header that opens the account menu
 function UserMenu() {
   const { user, logout } = useAuth()
   const confirm = useConfirm()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
   const rootRef = useRef(null)
@@ -75,9 +77,10 @@ function UserMenu() {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || `Reset failed (${res.status})`)
       }
+      flashToast('Demo data reset') // shown after the reload below
       window.location.assign('/')
     } catch (err) {
-      window.alert(err.message)
+      toast(err.message, 'error')
       setResetting(false)
     }
   }
