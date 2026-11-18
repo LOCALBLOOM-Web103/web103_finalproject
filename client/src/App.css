@@ -1591,3 +1591,178 @@ main.home {
     color: #ff8a80;
   }
 }
+
+/* Confirm modal (ConfirmContext.jsx): native <dialog> opened with showModal() */
+.confirm-modal {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 20px 50px var(--header-shadow);
+}
+.confirm-modal::backdrop {
+  background: rgba(18, 56, 71, 0.45);
+}
+.confirm-modal[open] {
+  animation: confirm-pop 0.15s ease-out;
+}
+@keyframes confirm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+.confirm-modal-body {
+  padding: 24px;
+}
+.confirm-modal-body h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--text-h);
+}
+.confirm-modal-body p {
+  margin: 0;
+  color: var(--muted);
+}
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirm-modal[open] {
+    animation: none;
+  }
+}
+
+/* Event picture upload (EventForm.jsx) */
+.upload-input {
+  padding: 10px 16px;
+  border: 1px dashed var(--field-border);
+  border-radius: 16px;
+  background: var(--field-bg);
+  color: var(--form-text);
+  font: inherit;
+  cursor: pointer;
+}
+.upload-input:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.upload-input::file-selector-button {
+  margin-right: 12px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.upload-status {
+  margin: 0;
+  color: var(--muted);
+}
+.event-image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.event-image-preview img {
+  max-width: 100%;
+  max-height: 250px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+/* Toast messages (ToastContext.jsx) */
+.toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none; /* empty space in the stack never blocks clicks */
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 360px;
+  padding: 12px 12px 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text-h);
+  box-shadow: 0 10px 30px var(--header-shadow);
+  pointer-events: auto;
+  animation: toast-in 0.15s ease-out;
+}
+.toast-error {
+  border-left-color: var(--danger);
+}
+.toast-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.toast-error .toast-icon {
+  background: var(--danger);
+}
+.toast-message {
+  flex: 1;
+}
+.toast-close {
+  flex: none;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.toast-close:hover {
+  color: var(--text-h);
+}
+.toast-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (max-width: 600px) {
+  .toast-stack {
+    left: 16px;
+    align-items: stretch;
+  }
+  .toast {
+    max-width: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

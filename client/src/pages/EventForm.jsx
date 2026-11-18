@@ -4,6 +4,7 @@ import DateTimeField from '../components/DateTimeField.jsx'
 import Dropdown from '../components/Dropdown.jsx'
 import TagPicker from '../components/TagPicker.jsx'
 import Loading from '../components/Loading.jsx'
+import { useToast } from '../ToastContext.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -65,6 +66,9 @@ const US_STATES = [
   ['WY', 'Wyoming'],
   ['DC', 'Washington, DC'],
 ]
+// Cloudinary's free plan allows 10 MB; 5 MB keeps uploads quick on phones
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
 const emptyEvent = {
   title: '',
   venue_id: '',
@@ -105,11 +109,13 @@ function EventForm() {
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
+  const toast = useToast()
   const [form, setForm] = useState(emptyEvent)
   const [options, setOptions] = useState(null) // { venues, activityTypes, tags }
   const [loadError, setLoadError] = useState(null)
   const [submitError, setSubmitError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [step, setStep] = useState(1) // the form has two pages
   const step1Ref = useRef(null)
 
@@ -218,9 +224,53 @@ function EventForm() {
     window.scrollTo({ top: 0 })
   }
 
+  // Uploads the chosen picture straight to Cloudinary using a one-time signature from
+  // our server, then keeps the returned URL in image_url (saved with the event as before)
+  const handleFile = async (e) => {
+    const file = e.target.files[0]
+    e.target.value = '' // so picking the same file again still fires onChange
+    if (!file) return
+    if (!file.type.startsWith('image/'))
+      return setSubmitError('Choose an image file (JPG, PNG, WebP…).')
+    if (file.size > MAX_UPLOAD_BYTES)
+      return setSubmitError('Picture must be 5 MB or smaller.')
+
+    setUploading(true)
+    setSubmitError(null)
+    try {
+      const sigRes = await fetch('/api/uploads/signature', { method: 'POST' })
+      const sig = await sigRes.json().catch(() => ({}))
+      if (!sigRes.ok)
+        throw new Error(sig.error || `Upload failed (${sigRes.status})`)
+
+      const data = new FormData()
+      data.append('file', file)
+      data.append('api_key', sig.apiKey)
+      data.append('timestamp', sig.timestamp)
+      data.append('folder', sig.folder)
+      data.append('signature', sig.signature)
+      const upRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
+        { method: 'POST', body: data },
+      )
+      const uploaded = await upRes.json().catch(() => ({}))
+      if (!upRes.ok)
+        throw new Error(
+          uploaded.error?.message || 'Upload to Cloudinary failed',
+        )
+      setForm((f) => ({ ...f, image_url: uploaded.secure_url }))
+      toast('Picture uploaded')
+    } catch (err) {
+      setSubmitError(err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (step === 1) return goNext() // Enter on page 1 goes to page 2 instead of submitting
+    if (uploading) return // saving now would drop the picture that's still uploading
     // The date and time fields leave '' until both a date and a valid time are filled in
     if (!form.start_time || !form.end_time)
       return setSubmitError(
@@ -264,6 +314,7 @@ function EventForm() {
       const body = await res.json()
       if (!res.ok)
         throw new Error(body.error || `Request failed (${res.status})`)
+      toast(isEdit ? 'Changes saved' : 'Event posted')
       navigate(`/events/${body.id}`)
     } catch (err) {
       setSubmitError(err.message)
@@ -502,26 +553,31 @@ function EventForm() {
         </label>
 
         <label>
-          Picture URL (optional)
+          Event picture (optional)
           <input
-            type="url"
-            placeholder="https://example.com/event-photo.jpg"
-            value={form.image_url}
-            onChange={set('image_url')}
+            type="file"
+            accept="image/*"
+            className="upload-input"
+            onChange={handleFile}
+            disabled={uploading || saving}
           />
         </label>
+        {uploading && (
+          <p className="upload-status" role="status">
+            Uploading…
+          </p>
+        )}
         {form.image_url.trim() && (
           <div className="event-image-preview">
-            <img
-              src={form.image_url.trim()}
-              alt="Event picture preview"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '250px',
-                objectFit: 'cover',
-                borderRadius: '16px',
-              }}
-            />
+            <img src={form.image_url.trim()} alt="Event picture preview" />
+            <button
+              type="button"
+              className="secondary-button danger"
+              onClick={() => setForm((f) => ({ ...f, image_url: '' }))}
+              disabled={uploading || saving}
+            >
+              Remove picture
+            </button>
           </div>
         )}
       </div>
@@ -548,7 +604,11 @@ function EventForm() {
             >
               ← Back
             </button>
-            <button type="submit" className="button" disabled={saving}>
+            <button
+              type="submit"
+              className="button"
+              disabled={saving || uploading}
+            >
               {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post event'}
             </button>
           </>

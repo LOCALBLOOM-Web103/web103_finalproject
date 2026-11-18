@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { formatDate } from '../format.js'
 import { useAuth } from '../AuthContext.jsx'
+import { useConfirm } from '../ConfirmContext.jsx'
+import { useToast } from '../ToastContext.jsx'
 import Loading from '../components/Loading.jsx'
 import SaveButton from '../components/SaveButton.jsx'
 
@@ -29,24 +31,31 @@ function EventPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const confirm = useConfirm()
+  const toast = useToast()
   const [event, setEvent] = useState(null)
   const [error, setError] = useState(null)
   const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState(null)
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete "${event.title}"? This can't be undone.`))
+    if (
+      !(await confirm({
+        title: `Delete "${event.title}"?`,
+        message: "This can't be undone.",
+        confirmLabel: 'Delete',
+      }))
+    )
       return
     setDeleting(true)
-    setDeleteError(null)
     try {
       const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
       // 404 means it's already gone, which is the outcome the user wanted
       if (!res.ok && res.status !== 404)
         throw new Error(`Delete failed (${res.status})`)
+      toast(`Deleted "${event.title}"`)
       navigate('/')
     } catch (err) {
-      setDeleteError(err.message)
+      toast(err.message, 'error')
       setDeleting(false)
     }
   }
@@ -107,11 +116,6 @@ function EventPage() {
           </div>
         )}
       </div>
-      {deleteError && (
-        <p className="form-error" role="alert">
-          {deleteError}
-        </p>
-      )}
       <div className={`event-body${event.images[0] ? ' has-poster' : ''}`}>
         {event.images[0] && (
           <div

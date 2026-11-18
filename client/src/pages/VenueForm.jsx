@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../AuthContext.jsx'
+import { useToast } from '../ToastContext.jsx'
 import Loading from '../components/Loading.jsx'
 
 const EMPTY = {
@@ -19,6 +20,7 @@ function VenueForm() {
   const isEdit = Boolean(id)
   const navigate = useNavigate()
   const { user } = useAuth()
+  const toast = useToast()
   const [form, setForm] = useState(isEdit ? null : EMPTY)
   const [loadError, setLoadError] = useState(null)
   const [error, setError] = useState(null)
@@ -77,6 +79,7 @@ function VenueForm() {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || `Save failed (${res.status})`)
       }
+      toast(isEdit ? 'Venue updated' : 'Venue added')
       navigate('/venues')
     } catch (err) {
       setError(err.message)
