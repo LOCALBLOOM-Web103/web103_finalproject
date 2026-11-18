@@ -75,6 +75,39 @@
       "longitude": -122.4374,
       "website_url": "https://caseformaking.com/",
       "hours": "Daily 11am-6pm"
+    },
+    {
+      "id": 5,
+      "owner_id": 3,
+      "name": "The Greenhouse Collective",
+      "address": "2415 Shattuck Avenue",
+      "city": "Berkeley",
+      "latitude": 37.865,
+      "longitude": -122.268,
+      "website_url": "https://example.com/greenhouse-collective",
+      "hours": "Tue-Sun 9am-6pm"
+    },
+    {
+      "id": 6,
+      "owner_id": 2,
+      "name": "Mission Makers Hall",
+      "address": "2200 Mission Street",
+      "city": "San Francisco",
+      "latitude": 37.7599,
+      "longitude": -122.4194,
+      "website_url": "https://example.com/mission-makers-hall",
+      "hours": "Daily 10am-10pm"
+    },
+    {
+      "id": 7,
+      "owner_id": 1,
+      "name": "Lakeside Reading Room",
+      "address": "1200 Lakeshore Avenue",
+      "city": "Oakland",
+      "latitude": 37.806,
+      "longitude": -122.248,
+      "website_url": "https://example.com/lakeside-reading-room",
+      "hours": "Wed-Mon 11am-8pm"
     }
   ],
   "activity_types": [
@@ -155,7 +188,7 @@
       "tag_ids": [1, 2, 7],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-1/800/500",
+          "url": "https://i0.wp.com/nassaumuseum.org/wp-content/uploads/2025/11/The-manes-Art-Education-Center-Art-Classes-e1765912510291.jpg?fit=1362%2C866&ssl=1",
           "position": 0
         }
       ]
@@ -173,7 +206,7 @@
       "tag_ids": [6, 9, 2],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-2/800/500",
+          "url": "https://cafearabo.com/wp-content/uploads/2022/07/art-latte-imagen-de-portada-1024x683.jpg",
           "position": 0
         }
       ]
@@ -191,7 +224,7 @@
       "tag_ids": [4, 10],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-3/800/500",
+          "url": "https://static.wixstatic.com/media/ccdec8_5cdcab5b3f58437eb8687d627118161c~mv2.png/v1/fill/w_1728,h_2304,al_c,q_95,enc_auto/ccdec8_5cdcab5b3f58437eb8687d627118161c~mv2.png",
           "position": 0
         }
       ]
@@ -209,7 +242,7 @@
       "tag_ids": [10],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-4/800/500",
+          "url": "https://echopublishing.wordpress.com/wp-content/uploads/2021/07/izm2021pdxzinesymposium-1.jpg",
           "position": 0
         }
       ]
@@ -227,7 +260,7 @@
       "tag_ids": [5, 2, 7],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-5/800/500",
+          "url": "https://i0.wp.com/www.ozzylosiknitdesigns.com/wp-content/uploads/2021/05/BP-Pins-Cast-on-method-4-2.png?w=1000&ssl=1",
           "position": 0
         }
       ]
@@ -245,7 +278,7 @@
       "tag_ids": [1, 5, 8],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-6/800/500",
+          "url": "https://cdn.shopify.com/s/files/1/1426/3100/files/Untitled_Artwork_23e318fa-5618-4a9b-ba35-1bf94c97196e.jpg?v=1789010893",
           "position": 0
         }
       ]
@@ -263,7 +296,7 @@
       "tag_ids": [6, 7],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-7/800/500",
+          "url": "https://artstudiolife.com/wp-content/uploads/2022/11/watercolor-landscape-painting.jpg",
           "position": 0
         }
       ]
@@ -281,7 +314,223 @@
       "tag_ids": [6, 3, 2],
       "images": [
         {
-          "url": "https://picsum.photos/seed/localbloom-8/800/500",
+          "url": "https://mlcshio3tyfi.i.optimole.com/w:1000/h:924/q:mauto/f:best/https://pdxparent.com/wp-content/uploads/2024/12/Sellwood-Communit-House-messy-art.jpg",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "venue_id": 5,
+      "activity_type_id": 4,
+      "title": "Winter Plant & Succulent Swap",
+      "description": "(sample) Trade cuttings, seedlings and houseplants with other growers.",
+      "what_to_bring": "Cuttings or plants to swap (optional)",
+      "start_time": "2026-11-21 10:00",
+      "end_time": "2026-11-21 14:00",
+      "price": 0,
+      "tag_ids": [8, 2],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-9/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "venue_id": 1,
+      "activity_type_id": 1,
+      "title": "Glazing Day: Make It Shine",
+      "description": "(sample) Glaze your bisque-fired pieces with help from the studio team.",
+      "what_to_bring": "Pieces to glaze (bisque ware is available to buy)",
+      "start_time": "2026-11-22 13:00",
+      "end_time": "2026-11-22 16:00",
+      "price": 60,
+      "tag_ids": [1, 7],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-10/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "venue_id": 6,
+      "activity_type_id": 2,
+      "title": "Linocut Printmaking Basics",
+      "description": "(sample) Carve a small linoleum block and pull your first prints.",
+      "what_to_bring": "Nothing - tools and ink provided",
+      "start_time": "2026-11-23 18:30",
+      "end_time": "2026-11-23 21:00",
+      "price": 55,
+      "tag_ids": [6, 2, 7],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-11/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "venue_id": 7,
+      "activity_type_id": 3,
+      "title": "Acoustic Open Mic Night",
+      "description": "(sample) Sign up at the door for a three-song slot. Acoustic instruments and voices only.",
+      "what_to_bring": "Your instrument",
+      "start_time": "2026-11-25 19:30",
+      "end_time": "2026-11-25 22:00",
+      "price": 8,
+      "tag_ids": [9],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-12/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "venue_id": 2,
+      "activity_type_id": 5,
+      "title": "Cozy Mystery Book Club",
+      "description": "(sample) Tea, treats, and a chat about this month's whodunit.",
+      "what_to_bring": "A copy of the book (optional)",
+      "start_time": "2026-11-28 15:00",
+      "end_time": "2026-11-28 17:00",
+      "price": 0,
+      "tag_ids": [10, 9],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-13/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "venue_id": 3,
+      "activity_type_id": 1,
+      "title": "Natural Dye Workshop",
+      "description": "(sample) Dye wool and cotton with plants, roots and kitchen scraps.",
+      "what_to_bring": "An apron; fibers are provided",
+      "start_time": "2026-12-03 17:00",
+      "end_time": "2026-12-03 20:00",
+      "price": 75,
+      "tag_ids": [5, 7, 2],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-14/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "venue_id": 4,
+      "activity_type_id": 2,
+      "title": "Calligraphy for Cards",
+      "description": "(sample) Learn two simple brush lettering styles and make a set of holiday cards.",
+      "what_to_bring": "Nothing - supplies provided",
+      "start_time": "2026-12-05 11:00",
+      "end_time": "2026-12-05 13:00",
+      "price": 40,
+      "tag_ids": [6, 7, 2],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-15/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "venue_id": 5,
+      "activity_type_id": 4,
+      "title": "Makers' Winter Night Market",
+      "description": "(sample) Lantern-lit stalls with local ceramics, prints, candles and hot cider.",
+      "what_to_bring": "A tote bag",
+      "start_time": "2026-12-12 17:00",
+      "end_time": "2026-12-12 21:00",
+      "price": 0,
+      "tag_ids": [8, 9],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-16/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "venue_id": 6,
+      "activity_type_id": 5,
+      "title": "Sketchcrawl: Mission Murals",
+      "description": "(sample) Walk a few blocks of murals and sketch the ones that catch your eye.",
+      "what_to_bring": "A sketchbook and pencils",
+      "start_time": "2026-12-13 10:00",
+      "end_time": "2026-12-13 13:00",
+      "price": 0,
+      "tag_ids": [6, 8],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-17/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "venue_id": 1,
+      "activity_type_id": 2,
+      "title": "Handbuilding Mugs for Kids",
+      "description": "(sample) Pinch and coil a mug to take home once it has been fired. Ages 7-12.",
+      "what_to_bring": "A smock or old t-shirt",
+      "start_time": "2026-12-19 10:00",
+      "end_time": "2026-12-19 11:30",
+      "price": 22,
+      "tag_ids": [1, 3, 2],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-18/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "venue_id": 7,
+      "activity_type_id": 3,
+      "title": "Poetry & Pie Night",
+      "description": "(sample) Read a poem or just listen, with slices of pie from a local baker.",
+      "what_to_bring": "Your poems",
+      "start_time": "2026-12-20 18:00",
+      "end_time": "2026-12-20 20:30",
+      "price": 12,
+      "tag_ids": [4, 9],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-19/800/500",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "venue_id": 2,
+      "activity_type_id": 1,
+      "title": "Bookbinding: Handsewn Journals",
+      "description": "(sample) Fold, sew and cover a journal with Japanese stab binding.",
+      "what_to_bring": "Nothing - paper, thread and covers provided",
+      "start_time": "2027-01-09 12:00",
+      "end_time": "2027-01-09 15:30",
+      "price": 95,
+      "tag_ids": [10, 7],
+      "images": [
+        {
+          "url": "https://picsum.photos/seed/localbloom-20/800/500",
           "position": 0
         }
       ]

@@ -87,10 +87,10 @@ const schema = `
 function validateData() {
   const expected = {
     users: 3,
-    venues: 4,
+    venues: 7,
     activity_types: 5,
     tags: 10,
-    events: 8,
+    events: 20,
   }
 
   for (const [name, count] of Object.entries(expected)) {
@@ -205,7 +205,7 @@ function validateData() {
     imageCount += event.images.length
   }
 
-  if (tagLinks !== 20 || imageCount !== 8) {
+  if (tagLinks !== 47 || imageCount !== 20) {
     throw new Error('Unexpected event relationship counts')
   }
 
