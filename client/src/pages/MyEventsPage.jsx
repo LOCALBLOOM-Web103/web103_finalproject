@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom'
 import { formatShortDate } from '../format.js'
 import Loading from '../components/Loading.jsx'
 import { useConfirm } from '../ConfirmContext.jsx'
+import { useToast } from '../ToastContext.jsx'
 
 // Container + view for /my-events (wrapped in RequireAuth in App.jsx): the events you posted
 function MyEventsPage() {
   const confirm = useConfirm()
+  const toast = useToast()
   const [events, setEvents] = useState(null)
   const [error, setError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -32,15 +34,15 @@ function MyEventsPage() {
     )
       return
     setDeletingId(event.id)
-    setError(null)
     try {
       const res = await fetch(`/api/events/${event.id}`, { method: 'DELETE' })
       // 404 means it's already gone, which is the outcome the user wanted
       if (!res.ok && res.status !== 404)
         throw new Error(`Delete failed (${res.status})`)
       setEvents((current) => current.filter((e) => e.id !== event.id))
+      toast(`Deleted "${event.title}"`)
     } catch (err) {
-      setError(err.message)
+      toast(err.message, 'error')
     } finally {
       setDeletingId(null)
     }
