@@ -271,7 +271,7 @@ function EventForm() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (step === 1) return goNext() // Enter on page 1 goes to page 2 instead of submitting
-    if (uploading) return // saving now would drop the picture that's still uploading
+    if (uploading || saving) return // no double submit; saving now would drop a picture still uploading
     // The date and time fields leave '' until both a date and a valid time are filled in
     if (!form.start_time || !form.end_time)
       return setSubmitError(
@@ -333,302 +333,305 @@ function EventForm() {
 
   return (
     <form className="event-form" onSubmit={handleSubmit}>
-      {isEdit ? (
-        <Link to={`/events/${id}`} className="back">
-          ← Back to event
-        </Link>
-      ) : (
-        <Link to="/" className="back">
-          ← All events
-        </Link>
-      )}
-      <h1>{isEdit ? 'Edit event' : 'Post a new event'}</h1>
-      <p className="step-indicator">Step {step} of 2</p>
+      {/* Native: disables every input and button inside while the form saves */}
+      <fieldset className="form-lock" disabled={saving}>
+        {isEdit ? (
+          <Link to={`/events/${id}`} className="back">
+            ← Back to event
+          </Link>
+        ) : (
+          <Link to="/" className="back">
+            ← All events
+          </Link>
+        )}
+        <h1>{isEdit ? 'Edit event' : 'Post a new event'}</h1>
+        <p className="step-indicator">Step {step} of 2</p>
 
-      {/* Page 1: the basics. Hidden (not removed) on page 2 so nothing typed is lost. */}
-      <div className="form-page" ref={step1Ref} hidden={step !== 1}>
-        <label>
-          Title
-          <input required value={form.title} onChange={set('title')} />
-        </label>
+        {/* Page 1: the basics. Hidden (not removed) on page 2 so nothing typed is lost. */}
+        <div className="form-page" ref={step1Ref} hidden={step !== 1}>
+          <label>
+            Title
+            <input required value={form.title} onChange={set('title')} />
+          </label>
 
-        <div className="field">
-          <span className="field-label">Activity type</span>
-          <Dropdown
-            variant="field"
-            label="Activity type"
-            placeholder="Choose a type"
-            value={form.activity_type_id}
-            options={options.activityTypes.map((a) => [String(a.id), a.name])}
-            onChange={(value) => setForm({ ...form, activity_type_id: value })}
+          <div className="field">
+            <span className="field-label">Activity type</span>
+            <Dropdown
+              variant="field"
+              label="Activity type"
+              placeholder="Choose a type"
+              value={form.activity_type_id}
+              options={options.activityTypes.map((a) => [String(a.id), a.name])}
+              onChange={(value) =>
+                setForm({ ...form, activity_type_id: value })
+              }
+            />
+          </div>
+
+          <fieldset>
+            <legend>Venue</legend>
+            <div className="choices">
+              <label className="choice">
+                <input
+                  type="radio"
+                  name="venueMode"
+                  checked={venueMode === 'existing'}
+                  onChange={() => setVenueMode('existing')}
+                />
+                Select an existing venue
+              </label>
+              <label className="choice">
+                <input
+                  type="radio"
+                  name="venueMode"
+                  checked={venueMode === 'new'}
+                  onChange={() => setVenueMode('new')}
+                />
+                Add a new venue
+              </label>
+            </div>
+            {venueMode === 'existing' ? (
+              <div className="field">
+                <span className="field-label">Venue</span>
+                <Dropdown
+                  variant="field"
+                  label="Venue"
+                  placeholder="Choose a venue"
+                  value={form.venue_id}
+                  options={options.venues.map((v) => [
+                    String(v.id),
+                    `${v.name} (${v.city})`,
+                  ])}
+                  onChange={(value) => setForm({ ...form, venue_id: value })}
+                />
+                <div className="venue-management-link">
+                  <Link to="/venues">Manage venues</Link>
+                </div>
+              </div>
+            ) : (
+              <div className="new-venue">
+                <label>
+                  Venue name
+                  <input
+                    required
+                    value={newVenue.name}
+                    onChange={updateVenue('name')}
+                  />
+                </label>
+                <label>
+                  Street address
+                  <input
+                    required
+                    value={newVenue.address}
+                    onChange={updateVenue('address')}
+                  />
+                </label>
+                <label>
+                  City
+                  <input
+                    required
+                    value={newVenue.city}
+                    onChange={updateVenue('city')}
+                  />
+                </label>
+                <div className="field">
+                  <span className="field-label">State</span>
+                  <Dropdown
+                    variant="field"
+                    label="State"
+                    placeholder="Choose a state"
+                    value={newVenue.state}
+                    options={US_STATES}
+                    onChange={(value) =>
+                      updateVenue('state')({ target: { value } })
+                    }
+                  />
+                </div>
+                <label>
+                  ZIP code (optional)
+                  <input
+                    value={newVenue.zip_code}
+                    onChange={updateVenue('zip_code')}
+                    inputMode="numeric"
+                    pattern="[0-9]{5}(-[0-9]{4})?"
+                    placeholder="33312"
+                  />
+                </label>
+                <label>
+                  Website (optional)
+                  <input
+                    type="url"
+                    value={newVenue.website_url}
+                    onChange={updateVenue('website_url')}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={findCoordinates}
+                  disabled={
+                    geoLoading ||
+                    !newVenue.address.trim() ||
+                    !newVenue.city.trim() ||
+                    !newVenue.state
+                  }
+                >
+                  {geoLoading ? (
+                    <>
+                      <Spinner /> Finding coordinates…
+                    </>
+                  ) : (
+                    'Find coordinates'
+                  )}
+                </button>
+                {geoStatus && <p role="status">{geoStatus}</p>}
+                <div className="form-row">
+                  <label>
+                    Latitude
+                    <input
+                      type="number"
+                      step="any"
+                      min="-90"
+                      max="90"
+                      value={newVenue.latitude}
+                      onChange={updateVenue('latitude')}
+                    />
+                  </label>
+                  <label>
+                    Longitude
+                    <input
+                      type="number"
+                      step="any"
+                      min="-180"
+                      max="180"
+                      value={newVenue.longitude}
+                      onChange={updateVenue('longitude')}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </fieldset>
+
+          <TagPicker
+            tags={options.tags}
+            selected={form.tag_ids}
+            onToggle={toggleTag}
           />
         </div>
 
-        <fieldset>
-          <legend>Venue</legend>
-          <div className="choices">
-            <label className="choice">
+        {/* Page 2: everything else, with the optional picture last */}
+        <div className="form-page" hidden={step !== 2}>
+          <div className="form-row">
+            <DateTimeField
+              label="Starts"
+              value={form.start_time}
+              onChange={(value) =>
+                setForm((f) => ({ ...f, start_time: value }))
+              }
+            />
+            <DateTimeField
+              label="Ends"
+              value={form.end_time}
+              minDate={form.start_time.slice(0, 10) || undefined}
+              onChange={(value) => setForm((f) => ({ ...f, end_time: value }))}
+            />
+          </div>
+          <div className="form-row">
+            <label>
+              Price ($)
               <input
-                type="radio"
-                name="venueMode"
-                checked={venueMode === 'existing'}
-                onChange={() => setVenueMode('existing')}
+                type="number"
+                required
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={set('price')}
               />
-              Select an existing venue
-            </label>
-            <label className="choice">
-              <input
-                type="radio"
-                name="venueMode"
-                checked={venueMode === 'new'}
-                onChange={() => setVenueMode('new')}
-              />
-              Add a new venue
             </label>
           </div>
-          {venueMode === 'existing' ? (
-            <div className="field">
-              <span className="field-label">Venue</span>
-              <Dropdown
-                variant="field"
-                label="Venue"
-                placeholder="Choose a venue"
-                value={form.venue_id}
-                options={options.venues.map((v) => [
-                  String(v.id),
-                  `${v.name} (${v.city})`,
-                ])}
-                onChange={(value) => setForm({ ...form, venue_id: value })}
-              />
-              <div className="venue-management-link">
-                <Link to="/venues">Manage venues</Link>
-              </div>
+
+          <label>
+            Description
+            <textarea
+              rows="4"
+              value={form.description}
+              onChange={set('description')}
+            />
+          </label>
+
+          <label>
+            What to bring
+            <input value={form.what_to_bring} onChange={set('what_to_bring')} />
+          </label>
+
+          <label>
+            Event picture (optional)
+            <input
+              type="file"
+              accept="image/*"
+              className="upload-input"
+              onChange={handleFile}
+              disabled={uploading}
+            />
+          </label>
+          {uploading && (
+            <p className="upload-status" role="status">
+              <Spinner /> Uploading…
+            </p>
+          )}
+          {form.image_url.trim() && (
+            <div className="event-image-preview">
+              <img src={form.image_url.trim()} alt="Event picture preview" />
+              <button
+                type="button"
+                className="secondary-button danger"
+                onClick={() => setForm((f) => ({ ...f, image_url: '' }))}
+                disabled={uploading}
+              >
+                Remove picture
+              </button>
             </div>
+          )}
+        </div>
+
+        {submitError && (
+          <p className="form-error" role="alert">
+            {submitError}
+          </p>
+        )}
+        <div className="form-actions">
+          {step === 1 ? (
+            <button type="button" className="button" onClick={goNext}>
+              Next →
+            </button>
           ) : (
-            <div className="new-venue">
-              <label>
-                Venue name
-                <input
-                  required
-                  value={newVenue.name}
-                  onChange={updateVenue('name')}
-                />
-              </label>
-              <label>
-                Street address
-                <input
-                  required
-                  value={newVenue.address}
-                  onChange={updateVenue('address')}
-                />
-              </label>
-              <label>
-                City
-                <input
-                  required
-                  value={newVenue.city}
-                  onChange={updateVenue('city')}
-                />
-              </label>
-              <div className="field">
-                <span className="field-label">State</span>
-                <Dropdown
-                  variant="field"
-                  label="State"
-                  placeholder="Choose a state"
-                  value={newVenue.state}
-                  options={US_STATES}
-                  onChange={(value) =>
-                    updateVenue('state')({ target: { value } })
-                  }
-                />
-              </div>
-              <label>
-                ZIP code (optional)
-                <input
-                  value={newVenue.zip_code}
-                  onChange={updateVenue('zip_code')}
-                  inputMode="numeric"
-                  pattern="[0-9]{5}(-[0-9]{4})?"
-                  placeholder="33312"
-                />
-              </label>
-              <label>
-                Website (optional)
-                <input
-                  type="url"
-                  value={newVenue.website_url}
-                  onChange={updateVenue('website_url')}
-                />
-              </label>
+            <>
               <button
                 type="button"
                 className="secondary-button"
-                onClick={findCoordinates}
-                disabled={
-                  geoLoading ||
-                  !newVenue.address.trim() ||
-                  !newVenue.city.trim() ||
-                  !newVenue.state
-                }
+                onClick={() => {
+                  setSubmitError(null)
+                  setStep(1)
+                }}
               >
-                {geoLoading ? (
+                ← Back
+              </button>
+              <button type="submit" className="button" disabled={uploading}>
+                {saving ? (
                   <>
-                    <Spinner /> Finding coordinates…
+                    <Spinner /> Saving…
                   </>
+                ) : isEdit ? (
+                  'Save changes'
                 ) : (
-                  'Find coordinates'
+                  'Post event'
                 )}
               </button>
-              {geoStatus && <p role="status">{geoStatus}</p>}
-              <div className="form-row">
-                <label>
-                  Latitude
-                  <input
-                    type="number"
-                    step="any"
-                    min="-90"
-                    max="90"
-                    value={newVenue.latitude}
-                    onChange={updateVenue('latitude')}
-                  />
-                </label>
-                <label>
-                  Longitude
-                  <input
-                    type="number"
-                    step="any"
-                    min="-180"
-                    max="180"
-                    value={newVenue.longitude}
-                    onChange={updateVenue('longitude')}
-                  />
-                </label>
-              </div>
-            </div>
+            </>
           )}
-        </fieldset>
-
-        <TagPicker
-          tags={options.tags}
-          selected={form.tag_ids}
-          onToggle={toggleTag}
-        />
-      </div>
-
-      {/* Page 2: everything else, with the optional picture last */}
-      <div className="form-page" hidden={step !== 2}>
-        <div className="form-row">
-          <DateTimeField
-            label="Starts"
-            value={form.start_time}
-            onChange={(value) => setForm((f) => ({ ...f, start_time: value }))}
-          />
-          <DateTimeField
-            label="Ends"
-            value={form.end_time}
-            minDate={form.start_time.slice(0, 10) || undefined}
-            onChange={(value) => setForm((f) => ({ ...f, end_time: value }))}
-          />
         </div>
-        <div className="form-row">
-          <label>
-            Price ($)
-            <input
-              type="number"
-              required
-              min="0"
-              step="0.01"
-              value={form.price}
-              onChange={set('price')}
-            />
-          </label>
-        </div>
-
-        <label>
-          Description
-          <textarea
-            rows="4"
-            value={form.description}
-            onChange={set('description')}
-          />
-        </label>
-
-        <label>
-          What to bring
-          <input value={form.what_to_bring} onChange={set('what_to_bring')} />
-        </label>
-
-        <label>
-          Event picture (optional)
-          <input
-            type="file"
-            accept="image/*"
-            className="upload-input"
-            onChange={handleFile}
-            disabled={uploading || saving}
-          />
-        </label>
-        {uploading && (
-          <p className="upload-status" role="status">
-            <Spinner /> Uploading…
-          </p>
-        )}
-        {form.image_url.trim() && (
-          <div className="event-image-preview">
-            <img src={form.image_url.trim()} alt="Event picture preview" />
-            <button
-              type="button"
-              className="secondary-button danger"
-              onClick={() => setForm((f) => ({ ...f, image_url: '' }))}
-              disabled={uploading || saving}
-            >
-              Remove picture
-            </button>
-          </div>
-        )}
-      </div>
-
-      {submitError && (
-        <p className="form-error" role="alert">
-          {submitError}
-        </p>
-      )}
-      <div className="form-actions">
-        {step === 1 ? (
-          <button type="button" className="button" onClick={goNext}>
-            Next →
-          </button>
-        ) : (
-          <>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                setSubmitError(null)
-                setStep(1)
-              }}
-            >
-              ← Back
-            </button>
-            <button
-              type="submit"
-              className="button"
-              disabled={saving || uploading}
-            >
-              {saving ? (
-                <>
-                  <Spinner /> Saving…
-                </>
-              ) : isEdit ? (
-                'Save changes'
-              ) : (
-                'Post event'
-              )}
-            </button>
-          </>
-        )}
-      </div>
+      </fieldset>
     </form>
   )
 }
