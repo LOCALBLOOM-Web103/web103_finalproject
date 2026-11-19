@@ -1790,3 +1790,24 @@ main.home {
   pointer-events: none;
   transition: opacity 0.15s;
 }
+
+/* Invisible wrapper whose only job is disabling every control while the form saves
+   (EventForm, VenueForm). Overrides the boxed .event-form fieldset style above. */
+.event-form fieldset.form-lock {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* same as .event-form */
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+.form-lock:disabled {
+  cursor: progress;
+}
+.form-lock:disabled input,
+.form-lock:disabled textarea,
+.form-lock:disabled button:not([type='submit']) {
+  opacity: 0.6;
+}

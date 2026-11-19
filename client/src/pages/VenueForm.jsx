@@ -68,6 +68,7 @@ function VenueForm() {
 
   async function submit(e) {
     e.preventDefault()
+    if (saving) return // no double submit
     setSaving(true)
     setError(null)
     try {
@@ -98,103 +99,106 @@ function VenueForm() {
 
   return (
     <form className="event-form" onSubmit={submit}>
-      <Link to="/venues" className="back">
-        Back to my venues
-      </Link>
-      <h1>{isEdit ? 'Edit venue' : 'Add a venue'}</h1>
+      {/* Native: disables every input and button inside while the form saves */}
+      <fieldset className="form-lock" disabled={saving}>
+        <Link to="/venues" className="back">
+          Back to my venues
+        </Link>
+        <h1>{isEdit ? 'Edit venue' : 'Add a venue'}</h1>
 
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-
-      <label>
-        Venue name
-        <input
-          required
-          maxLength={120}
-          value={form.name}
-          onChange={set('name')}
-        />
-      </label>
-      <div className="form-row">
-        <label>
-          Street address
-          <input
-            required
-            maxLength={200}
-            value={form.address}
-            onChange={set('address')}
-          />
-        </label>
-        <label>
-          City
-          <input
-            required
-            maxLength={100}
-            value={form.city}
-            onChange={set('city')}
-          />
-        </label>
-      </div>
-      <div className="form-row">
-        <label>
-          Latitude (optional)
-          <input
-            type="number"
-            step="any"
-            min={-90}
-            max={90}
-            value={form.latitude}
-            onChange={set('latitude')}
-          />
-        </label>
-        <label>
-          Longitude (optional)
-          <input
-            type="number"
-            step="any"
-            min={-180}
-            max={180}
-            value={form.longitude}
-            onChange={set('longitude')}
-          />
-        </label>
-      </div>
-      <p className="muted">
-        Coordinates let visitors see how far away the venue is.
-      </p>
-      <label>
-        Website (optional)
-        <input
-          type="url"
-          placeholder="https://"
-          value={form.website_url}
-          onChange={set('website_url')}
-        />
-      </label>
-      <label>
-        Hours (optional)
-        <input
-          maxLength={200}
-          placeholder="Tue–Sun 10am–8pm"
-          value={form.hours}
-          onChange={set('hours')}
-        />
-      </label>
-
-      <button type="submit" className="button" disabled={saving}>
-        {saving ? (
-          <>
-            <Spinner /> Saving…
-          </>
-        ) : isEdit ? (
-          'Save changes'
-        ) : (
-          'Add venue'
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
         )}
-      </button>
+
+        <label>
+          Venue name
+          <input
+            required
+            maxLength={120}
+            value={form.name}
+            onChange={set('name')}
+          />
+        </label>
+        <div className="form-row">
+          <label>
+            Street address
+            <input
+              required
+              maxLength={200}
+              value={form.address}
+              onChange={set('address')}
+            />
+          </label>
+          <label>
+            City
+            <input
+              required
+              maxLength={100}
+              value={form.city}
+              onChange={set('city')}
+            />
+          </label>
+        </div>
+        <div className="form-row">
+          <label>
+            Latitude (optional)
+            <input
+              type="number"
+              step="any"
+              min={-90}
+              max={90}
+              value={form.latitude}
+              onChange={set('latitude')}
+            />
+          </label>
+          <label>
+            Longitude (optional)
+            <input
+              type="number"
+              step="any"
+              min={-180}
+              max={180}
+              value={form.longitude}
+              onChange={set('longitude')}
+            />
+          </label>
+        </div>
+        <p className="muted">
+          Coordinates let visitors see how far away the venue is.
+        </p>
+        <label>
+          Website (optional)
+          <input
+            type="url"
+            placeholder="https://"
+            value={form.website_url}
+            onChange={set('website_url')}
+          />
+        </label>
+        <label>
+          Hours (optional)
+          <input
+            maxLength={200}
+            placeholder="Tue–Sun 10am–8pm"
+            value={form.hours}
+            onChange={set('hours')}
+          />
+        </label>
+
+        <button type="submit" className="button" disabled={saving}>
+          {saving ? (
+            <>
+              <Spinner /> Saving…
+            </>
+          ) : isEdit ? (
+            'Save changes'
+          ) : (
+            'Add venue'
+          )}
+        </button>
+      </fieldset>
     </form>
   )
 }
