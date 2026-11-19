@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Spinner from './Spinner.jsx'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../AuthContext.jsx'
 import { useConfirm } from '../ConfirmContext.jsx'
@@ -131,7 +132,13 @@ function UserMenu() {
             disabled={resetting}
             onClick={resetDemoData}
           >
-            {resetting ? 'Resetting…' : 'Reset demo data'}
+            {resetting ? (
+              <>
+                <Spinner /> Resetting…
+              </>
+            ) : (
+              'Reset demo data'
+            )}
           </button>
           <button
             type="button"

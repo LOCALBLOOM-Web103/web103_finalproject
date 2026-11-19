@@ -4,6 +4,7 @@ import DateTimeField from '../components/DateTimeField.jsx'
 import Dropdown from '../components/Dropdown.jsx'
 import TagPicker from '../components/TagPicker.jsx'
 import Loading from '../components/Loading.jsx'
+import Spinner from '../components/Spinner.jsx'
 import { useToast } from '../ToastContext.jsx'
 
 const getJson = (url) =>
@@ -471,7 +472,13 @@ function EventForm() {
                   !newVenue.state
                 }
               >
-                {geoLoading ? 'Finding coordinates...' : 'Find coordinates'}
+                {geoLoading ? (
+                  <>
+                    <Spinner /> Finding coordinates…
+                  </>
+                ) : (
+                  'Find coordinates'
+                )}
               </button>
               {geoStatus && <p role="status">{geoStatus}</p>}
               <div className="form-row">
@@ -564,7 +571,7 @@ function EventForm() {
         </label>
         {uploading && (
           <p className="upload-status" role="status">
-            Uploading…
+            <Spinner /> Uploading…
           </p>
         )}
         {form.image_url.trim() && (
@@ -609,7 +616,15 @@ function EventForm() {
               className="button"
               disabled={saving || uploading}
             >
-              {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Post event'}
+              {saving ? (
+                <>
+                  <Spinner /> Saving…
+                </>
+              ) : isEdit ? (
+                'Save changes'
+              ) : (
+                'Post event'
+              )}
             </button>
           </>
         )}

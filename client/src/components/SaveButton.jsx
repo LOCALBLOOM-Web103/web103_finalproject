@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Spinner from './Spinner.jsx'
 import { useToast } from '../ToastContext.jsx'
 
 // Save/unsave toggle for the event page; works in place, no navigation
@@ -31,6 +32,7 @@ function SaveButton({ eventId, initialSaved }) {
       disabled={busy}
       aria-pressed={saved}
     >
+      {busy && <Spinner />}
       {saved ? '★ Saved' : '☆ Save'}
     </button>
   )

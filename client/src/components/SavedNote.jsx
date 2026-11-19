@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Spinner from './Spinner.jsx'
 import { useToast } from '../ToastContext.jsx'
 
 // Private note on a saved event; saves when the field loses focus (or on Enter)
@@ -40,6 +41,11 @@ function SavedNote({ eventId, initialNote }) {
         aria-label="Note for this saved event"
         disabled={saving}
       />
+      {saving && (
+        <span className="muted" role="status">
+          <Spinner /> Saving…
+        </span>
+      )}
     </div>
   )
 }

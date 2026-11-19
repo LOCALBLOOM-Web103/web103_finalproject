@@ -4,6 +4,7 @@ import { milesBetween } from '../format.js'
 import EventCard from '../components/EventCard.jsx'
 import EventModal from '../components/EventModal.jsx'
 import Loading from '../components/Loading.jsx'
+import Spinner from '../components/Spinner.jsx'
 
 const getJson = (url) =>
   fetch(url).then((res) =>
@@ -41,6 +42,7 @@ function Dashboard() {
   const query = serverParams.toString()
 
   const [events, setEvents] = useState(null)
+  const [loadedQuery, setLoadedQuery] = useState(null) // the filters `events` belongs to
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState(null) // event shown in the quick-view modal
   const { location, unavailable } = useUserLocation()
@@ -51,6 +53,7 @@ function Dashboard() {
       .then((data) => {
         if (!stale) {
           setEvents(data)
+          setLoadedQuery(query)
           setError(null)
         }
       })
@@ -64,6 +67,8 @@ function Dashboard() {
 
   if (error) return <p className="status">Couldn't load events: {error}</p>
   if (!events) return <Loading label="Loading events…" />
+  // Filters changed and the new results haven't arrived yet: keep the old tiles, dimmed
+  const refreshing = loadedQuery !== query
 
   const withDistance = events.map((event) => ({
     ...event,
@@ -84,15 +89,27 @@ function Dashboard() {
     <>
       {radius && !location && (
         <p className="notice">
-          {unavailable
-            ? 'Allow location access to filter by distance.'
-            : 'Finding your location…'}
+          {unavailable ? (
+            'Allow location access to filter by distance.'
+          ) : (
+            <>
+              <Spinner /> Finding your location…
+            </>
+          )}
+        </p>
+      )}
+      {refreshing && (
+        <p className="notice" role="status">
+          <Spinner /> Updating events…
         </p>
       )}
       {!visible.length ? (
         <p className="status">No events match these filters.</p>
       ) : (
-        <div className="tile-grid">
+        <div
+          className={`tile-grid${refreshing ? ' is-refreshing' : ''}`}
+          aria-busy={refreshing}
+        >
           {visible.map((event) => (
             <EventCard
               key={event.id}

@@ -1766,3 +1766,27 @@ main.home {
     animation: none;
   }
 }
+
+/* Small inline spinner (Spinner.jsx) for buttons and page elements; the flower Loading is for whole pages */
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.4em;
+  vertical-align: -0.15em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: flower-spin 0.7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: flower-pulse 1.5s ease-in-out infinite;
+  }
+}
+/* Dashboard: old results stay visible but dimmed while new filter results load */
+.tile-grid.is-refreshing {
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}

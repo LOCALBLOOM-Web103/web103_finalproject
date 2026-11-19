@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext.jsx'
 import { useConfirm } from '../ConfirmContext.jsx'
 import { useToast } from '../ToastContext.jsx'
 import Loading from '../components/Loading.jsx'
+import Spinner from '../components/Spinner.jsx'
 import SaveButton from '../components/SaveButton.jsx'
 
 // Poster border colors: the dashboard tile palette. Old Lace is left out because it would
@@ -109,7 +110,13 @@ function EventPage() {
                   onClick={handleDelete}
                   disabled={deleting}
                 >
-                  {deleting ? 'Deleting…' : 'Delete'}
+                  {deleting ? (
+                    <>
+                      <Spinner /> Deleting…
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
                 </button>
               </>
             )}

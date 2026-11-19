@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../AuthContext.jsx'
 import { useToast } from '../ToastContext.jsx'
 import Loading from '../components/Loading.jsx'
+import Spinner from '../components/Spinner.jsx'
 
 const EMPTY = {
   name: '',
@@ -184,7 +185,15 @@ function VenueForm() {
       </label>
 
       <button type="submit" className="button" disabled={saving}>
-        {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add venue'}
+        {saving ? (
+          <>
+            <Spinner /> Saving…
+          </>
+        ) : isEdit ? (
+          'Save changes'
+        ) : (
+          'Add venue'
+        )}
       </button>
     </form>
   )
