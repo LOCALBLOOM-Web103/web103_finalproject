@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Loading from '../components/Loading.jsx'
+import Spinner from '../components/Spinner.jsx'
 import { useConfirm } from '../ConfirmContext.jsx'
 import { useToast } from '../ToastContext.jsx'
 
@@ -140,7 +141,13 @@ function VenuesPage() {
                   onClick={() => deleteVenue(venue)}
                   aria-label={`Delete ${venue.name}, venue ID ${venue.id}`}
                 >
-                  {deletingId === venue.id ? 'Deleting...' : 'Delete'}
+                  {deletingId === venue.id ? (
+                    <>
+                      <Spinner /> Deleting…
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
                 </button>
               </div>
             </li>

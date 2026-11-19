@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatShortDate } from '../format.js'
 import Loading from '../components/Loading.jsx'
+import Spinner from '../components/Spinner.jsx'
 import { useConfirm } from '../ConfirmContext.jsx'
 import { useToast } from '../ToastContext.jsx'
 
@@ -93,7 +94,13 @@ function MyEventsPage() {
                     onClick={() => deleteEvent(event)}
                     aria-label={`Delete ${event.title}`}
                   >
-                    {deletingId === event.id ? 'Deleting…' : 'Delete'}
+                    {deletingId === event.id ? (
+                      <>
+                        <Spinner /> Deleting…
+                      </>
+                    ) : (
+                      'Delete'
+                    )}
                   </button>
                 </div>
               </li>
