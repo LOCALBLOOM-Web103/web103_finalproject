@@ -75,6 +75,20 @@ https://imgur.com/a/uoApAau
 
 All submission and edit forms for organizers enforce strict client and server-side data validation before updating the database, requiring valid external URLs, structured address inputs, and standardized budget ranges.
 
+### Disable Buttons After They Have Been Clicked
+
+A button can't be clicked twice while its action is running. Every button that sends a request is disabled with a spinner until it finishes, so there are no double saves, deletes or logouts.
+
+Button audit (all 22 `<button>` elements in `client/src`):
+
+| Behavior after a click | Buttons | Count |
+|---|---|---|
+| **Disabled while its action runs** | Save/unsave, Reset demo data, Log out, Find coordinates, event form submit, venue form submit, Delete (event page, My Events, My Venues), Remove picture and ← Back (disabled while the form saves) | 11 |
+| **Removed from the screen by the click**, so it can't be clicked again | Confirm modal Cancel / Delete, toast ✕, quick-view ✕, calendar day, Next → | 6 |
+| **Open/close toggles**, which must stay clickable (still disabled while a form saves) | Dropdown trigger, date field, calendar ‹ / ›, avatar menu | 5 |
+
+**17 of 22 buttons (77%)** can't be clicked twice. That's every button that performs an action. The 5 toggles are left enabled on purpose, because disabling them would stop you from closing what you just opened.
+
 ## Smoke Tests
 
 Read-only checks that every page and public API route responds. They never log in or write data, so they are safe to run against the live site.
