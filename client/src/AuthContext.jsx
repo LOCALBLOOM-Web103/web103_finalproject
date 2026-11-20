@@ -19,7 +19,9 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function logout() {
-    await fetch('/auth/logout', { method: 'POST' })
+    const res = await fetch('/auth/logout', { method: 'POST' })
+    // Only look logged out once the server has actually ended the session
+    if (!res.ok) throw new Error(`Log out failed (${res.status})`)
     setUser(null)
   }
 

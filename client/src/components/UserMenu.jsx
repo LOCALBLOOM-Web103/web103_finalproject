@@ -12,6 +12,8 @@ function UserMenu() {
   const toast = useToast()
   const [open, setOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const busy = resetting || loggingOut // one account action at a time
   const rootRef = useRef(null)
   const buttonRef = useRef(null)
   const menuRef = useRef(null)
@@ -86,6 +88,18 @@ function UserMenu() {
     }
   }
 
+  // Menu stays open showing "Logging out…" so it can't be clicked twice;
+  // on success user becomes null and this menu unmounts
+  async function handleLogout() {
+    setLoggingOut(true)
+    try {
+      await logout()
+    } catch (err) {
+      toast(err.message, 'error')
+      setLoggingOut(false)
+    }
+  }
+
   const name = user.name || user.username
 
   return (
@@ -129,7 +143,7 @@ function UserMenu() {
             type="button"
             role="menuitem"
             className="danger"
-            disabled={resetting}
+            disabled={busy}
             onClick={resetDemoData}
           >
             {resetting ? (
@@ -144,12 +158,16 @@ function UserMenu() {
             type="button"
             role="menuitem"
             className="danger"
-            onClick={() => {
-              close()
-              logout()
-            }}
+            disabled={busy}
+            onClick={handleLogout}
           >
-            Log out
+            {loggingOut ? (
+              <>
+                <Spinner /> Logging out…
+              </>
+            ) : (
+              'Log out'
+            )}
           </button>
         </div>
       )}
