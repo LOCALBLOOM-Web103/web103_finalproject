@@ -1,7 +1,7 @@
 import express from 'express'
 import { pool } from '../config/database.js'
 import { requireAuth, ownershipError } from '../middleware/auth.js'
-import { isUsState, isZipCode } from '../../shared/usStates.js'
+import { validateVenue, venueValues } from './lookups.js'
 
 function validateImageUrl(imageUrl) {
   if (imageUrl === undefined || imageUrl === null || imageUrl === '')
@@ -186,9 +186,15 @@ router.delete('/:id/save', requireAuth, async (req, res) => {
 async function resolveVenueId(client, venueId, newVenue, ownerId) {
   if (newVenue == null) return venueId
 
-  const name = newVenue.name.trim()
-  const address = `${newVenue.address.trim()}, ${newVenue.state}${newVenue.zip_code ? ` ${newVenue.zip_code}` : ''}`
-  const city = newVenue.city.trim()
+  // Normalized the same way as POST /api/venues; state and ZIP live in the address.
+  // ponytail: the 200-char address limit is checked before ", CA 94110-1234" is added, so a
+  // stored address can reach 214 chars; validate the combined address if that ever matters.
+  const zip = newVenue.zip_code?.trim()
+  const values = venueValues({
+    ...newVenue,
+    address: `${newVenue.address.trim()}, ${newVenue.state}${zip ? ` ${zip}` : ''}`,
+  })
+  const [name, address, city] = values
 
   // Serialize venue creation through this application.
   // The lock is automatically released when the event transaction ends.
@@ -217,18 +223,10 @@ async function resolveVenueId(client, venueId, newVenue, ownerId) {
     rows: [venue],
   } = await client.query(
     `INSERT INTO venues
-       (owner_id, name, address, city, website_url, latitude, longitude)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+       (owner_id, name, address, city, latitude, longitude, website_url, hours)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id`,
-    [
-      ownerId,
-      name,
-      address,
-      city,
-      newVenue.website_url || null,
-      newVenue.latitude ?? null,
-      newVenue.longitude ?? null,
-    ],
+    [ownerId, ...values],
   )
 
   return venue.id
@@ -250,51 +248,11 @@ export function validateEvent(body) {
     tag_ids = [],
   } = body
   if (body.new_venue != null) {
+    // Same rules as POST /api/venues; state is required here because it goes into the address
     const v = body.new_venue
-
-    if (
-      typeof v !== 'object' ||
-      Array.isArray(v) ||
-      typeof v.name !== 'string' ||
-      !v.name.trim() ||
-      typeof v.address !== 'string' ||
-      !v.address.trim() ||
-      typeof v.city !== 'string' ||
-      !v.city.trim() ||
-      typeof v.state !== 'string' ||
-      !isUsState(v.state) ||
-      (v.zip_code != null &&
-        (typeof v.zip_code !== 'string' ||
-          (v.zip_code !== '' && !isZipCode(v.zip_code))))
-    ) {
-      return 'New venue requires name, street address, and city'
-    }
-
-    if (
-      v.website_url != null &&
-      (typeof v.website_url !== 'string' ||
-        !/^https?:\/\/[^/\s]+\.[^/\s]+/i.test(v.website_url))
-    ) {
-      return 'Invalid venue website URL'
-    }
-
-    if (
-      v.latitude != null &&
-      (typeof v.latitude !== 'number' ||
-        !Number.isFinite(v.latitude) ||
-        Math.abs(v.latitude) > 90)
-    ) {
-      return 'Invalid latitude'
-    }
-
-    if (
-      v.longitude != null &&
-      (typeof v.longitude !== 'number' ||
-        !Number.isFinite(v.longitude) ||
-        Math.abs(v.longitude) > 180)
-    ) {
-      return 'Invalid longitude'
-    }
+    const venueError =
+      validateVenue(v) ?? (v.state ? null : 'state is required')
+    if (venueError) return `New venue: ${venueError}`
   } else if (!Number.isInteger(venue_id)) {
     return 'venue_id must be an integer'
   }
