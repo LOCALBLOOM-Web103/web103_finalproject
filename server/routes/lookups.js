@@ -34,7 +34,17 @@ const VENUE_COLUMNS =
 export function validateVenue(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body))
     return 'Venue details are required'
-  const { name, address, city, latitude, longitude, website_url, hours } = body
+  const {
+    name,
+    address,
+    city,
+    state,
+    zip_code,
+    latitude,
+    longitude,
+    website_url,
+    hours,
+  } = body
 
   for (const [field, value, max] of [
     ['name', name, 120],
@@ -48,6 +58,16 @@ export function validateVenue(body) {
   }
 
   const blank = (v) => v === undefined || v === null || v === ''
+
+  // Only the event form's inline new venue sends these; they end up in the address
+  if (!blank(state) && !isUsState(state))
+    return 'state must be a US state code like CA'
+  if (
+    !blank(zip_code) &&
+    (typeof zip_code !== 'string' || !isZipCode(zip_code.trim()))
+  )
+    return 'zip_code must be 5 digits or ZIP+4 (like 94110 or 94110-1234)'
+
   if (blank(latitude) !== blank(longitude))
     return 'Provide both latitude and longitude, or neither'
   if (!blank(latitude)) {
@@ -77,7 +97,7 @@ export function validateVenue(body) {
 }
 
 // Normalized values in column order: name, address, city, latitude, longitude, website_url, hours
-function venueValues(body) {
+export function venueValues(body) {
   const text = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null)
   const num = (v) =>
     v === undefined || v === null || v === '' ? null : Number(v)
