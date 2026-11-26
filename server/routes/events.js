@@ -183,17 +183,22 @@ router.delete('/:id/save', requireAuth, async (req, res) => {
 })
 
 // Basic checks only; stricter validation (URLs, address format) is a separate issue
-async function resolveVenueId(client, venueId, newVenue, ownerId) {
-  if (newVenue == null) return venueId
-
-  // Normalized the same way as POST /api/venues; state and ZIP live in the address.
-  // ponytail: the 200-char address limit is checked before ", CA 94110-1234" is added, so a
-  // stored address can reach 214 chars; validate the combined address if that ever matters.
+// Column values for an inline new_venue, normalized the same way as POST /api/venues;
+// state and ZIP live in the address.
+// ponytail: the 200-char address limit is checked before ", CA 94110-1234" is added, so a
+// stored address can reach 214 chars; validate the combined address if that ever matters.
+export function newVenueValues(newVenue) {
   const zip = newVenue.zip_code?.trim()
-  const values = venueValues({
+  return venueValues({
     ...newVenue,
     address: `${newVenue.address.trim()}, ${newVenue.state}${zip ? ` ${zip}` : ''}`,
   })
+}
+
+async function resolveVenueId(client, venueId, newVenue, ownerId) {
+  if (newVenue == null) return venueId
+
+  const values = newVenueValues(newVenue)
   const [name, address, city] = values
 
   // Serialize venue creation through this application.

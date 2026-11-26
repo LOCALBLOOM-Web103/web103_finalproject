@@ -1,7 +1,7 @@
 // Run: node --test server/routes/events.test.js
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mergeEventPatch, validateEvent } from './events.js'
+import { mergeEventPatch, newVenueValues, validateEvent } from './events.js'
 import { validateVenue } from './lookups.js'
 
 // Shaped like a row from `SELECT * FROM events` (pg returns NUMERIC as a string, TIMESTAMP as a Date)
@@ -95,4 +95,53 @@ test('an inline new_venue needs a state, since it goes into the address', () => 
       validateEvent({ ...event, new_venue: { ...venue, state } }),
       /^New venue: state /,
     )
+})
+
+// Column order: name, address, city, latitude, longitude, website_url, hours
+test('an inline new_venue is saved trimmed, with state and ZIP in the address', () => {
+  assert.deepEqual(
+    newVenueValues({
+      name: ' Clay & Coffee Studio ',
+      address: ' 412 Valencia St ',
+      city: 'San Francisco',
+      state: 'CA',
+      zip_code: ' 94110 ',
+      latitude: '37.7652',
+      longitude: '-122.4219',
+      website_url: '  https://example.com  ',
+    }),
+    [
+      'Clay & Coffee Studio',
+      '412 Valencia St, CA 94110',
+      'San Francisco',
+      37.7652,
+      -122.4219,
+      'https://example.com',
+      null,
+    ],
+  )
+})
+
+test('blank inline new_venue fields are saved as null, not empty strings', () => {
+  assert.deepEqual(
+    newVenueValues({
+      name: 'Clay & Coffee Studio',
+      address: '412 Valencia St',
+      city: 'San Francisco',
+      state: 'CA',
+      zip_code: '',
+      latitude: '',
+      longitude: '',
+      website_url: '',
+    }),
+    [
+      'Clay & Coffee Studio',
+      '412 Valencia St, CA',
+      'San Francisco',
+      null,
+      null,
+      null,
+      null,
+    ],
+  )
 })
