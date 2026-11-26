@@ -1,6 +1,7 @@
 import express from 'express'
 import { pool } from '../config/database.js'
 import { requireAuth, ownershipError } from '../middleware/auth.js'
+import { isUsState, isZipCode } from '../../shared/usStates.js'
 
 const router = express.Router()
 
@@ -281,13 +282,7 @@ router.get('/geocode', async (req, res) => {
   const zip =
     typeof req.query.zip_code === 'string' ? req.query.zip_code.trim() : ''
 
-  const validStates = new Set(
-    'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC'.split(
-      ' ',
-    ),
-  )
-
-  if (!validStates.has(state) || (zip && !/^\d{5}(-\d{4})?$/.test(zip))) {
+  if (!isUsState(state) || (zip && !isZipCode(zip))) {
     return res.status(400).json({
       error: 'Choose a valid US state and ZIP code.',
     })
