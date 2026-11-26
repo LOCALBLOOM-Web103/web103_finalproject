@@ -1,6 +1,7 @@
 import express from 'express'
 import { pool } from '../config/database.js'
 import { requireAuth, ownershipError } from '../middleware/auth.js'
+import { isUsState, isZipCode } from '../../shared/usStates.js'
 
 function validateImageUrl(imageUrl) {
   if (imageUrl === undefined || imageUrl === null || imageUrl === '')
@@ -261,12 +262,10 @@ export function validateEvent(body) {
       typeof v.city !== 'string' ||
       !v.city.trim() ||
       typeof v.state !== 'string' ||
-      !/^(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)$/.test(
-        v.state,
-      ) ||
+      !isUsState(v.state) ||
       (v.zip_code != null &&
         (typeof v.zip_code !== 'string' ||
-          (v.zip_code !== '' && !/^\d{5}(-\d{4})?$/.test(v.zip_code))))
+          (v.zip_code !== '' && !isZipCode(v.zip_code))))
     ) {
       return 'New venue requires name, street address, and city'
     }
