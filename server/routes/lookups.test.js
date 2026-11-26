@@ -61,3 +61,17 @@ test('overlong fields are rejected', () => {
     'name must be 120 characters or fewer',
   )
 })
+
+test('state is optional but must be a US state code when sent', () => {
+  assert.equal(validateVenue({ ...valid, state: 'CA' }), null)
+  assert.equal(validateVenue({ ...valid, state: '' }), null)
+  for (const state of ['ZZ', 'ca', 7])
+    assert.match(validateVenue({ ...valid, state }), /^state /)
+})
+
+test('zip_code is optional but must be 5 digits or ZIP+4 when sent', () => {
+  for (const zip_code of ['94110', '94110-1234', ' 94110 ', ''])
+    assert.equal(validateVenue({ ...valid, zip_code }), null, zip_code)
+  for (const zip_code of ['9411', '94110-12', 'abcde', 94110])
+    assert.match(validateVenue({ ...valid, zip_code }), /^zip_code /)
+})

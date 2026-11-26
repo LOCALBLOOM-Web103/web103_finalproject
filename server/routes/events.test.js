@@ -2,6 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { mergeEventPatch, validateEvent } from './events.js'
+import { validateVenue } from './lookups.js'
 
 // Shaped like a row from `SELECT * FROM events` (pg returns NUMERIC as a string, TIMESTAMP as a Date)
 const existing = {
@@ -39,4 +40,59 @@ test('PATCH with a bad field is rejected', () => {
     validateEvent(mergeEventPatch(existing, { title: '  ' })),
     'title is required',
   )
+})
+
+const event = {
+  activity_type_id: 1,
+  title: 'Wheel Throwing 101',
+  start_time: '2026-12-01T18:00',
+  end_time: '2026-12-01T20:00',
+}
+const venue = {
+  name: 'Clay & Coffee Studio',
+  address: '412 Valencia St',
+  city: 'San Francisco',
+  state: 'CA',
+  zip_code: '94110',
+}
+
+// [venue, null if valid, else the field the message must name]
+const cases = [
+  [venue, null],
+  [{ ...venue, latitude: '37.7', longitude: '-122.4' }, null],
+  [{ ...venue, latitude: 37.7, longitude: -122.4 }, null],
+  [{ ...venue, latitude: '', longitude: '' }, null],
+  [{ ...venue, website_url: '' }, null],
+  [{ ...venue, website_url: 'https://localhost:3000' }, null],
+  [{ ...venue, website_url: 'ftp://x.com' }, 'website_url'],
+  [{ ...venue, website_url: 'not a url' }, 'website_url'],
+  [{ ...venue, latitude: 37.7 }, 'Provide both latitude and longitude'],
+  [{ ...venue, latitude: 1, longitude: 'east' }, 'longitude'],
+  [{ ...venue, name: 'x'.repeat(121) }, 'name'],
+  [{ ...venue, city: '  ' }, 'city'],
+  [{ ...venue, state: 'ZZ' }, 'state'],
+  [{ ...venue, zip_code: '9411' }, 'zip_code'],
+]
+
+test('POST /api/venues and an inline new_venue give the same answer', () => {
+  for (const [v, field] of cases) {
+    const label = JSON.stringify(v)
+    const venueError = validateVenue(v)
+    const eventError = validateEvent({ ...event, new_venue: v })
+    if (field === null) {
+      assert.equal(venueError, null, label)
+      assert.equal(eventError, null, label)
+    } else {
+      assert.match(venueError, new RegExp(`^${field}`), label)
+      assert.equal(eventError, `New venue: ${venueError}`, label)
+    }
+  }
+})
+
+test('an inline new_venue needs a state, since it goes into the address', () => {
+  for (const state of [undefined, null, ''])
+    assert.match(
+      validateEvent({ ...event, new_venue: { ...venue, state } }),
+      /^New venue: state /,
+    )
 })
