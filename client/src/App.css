@@ -667,6 +667,10 @@ main {
 main.home {
   max-width: none;
   padding: 0;
+  /* At least one screen tall, so the grid can fill it with no empty strip below */
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 69px);
 }
 /* Event detail pages: a cream (Old Lace) background fills the whole page, the content stays centered.
    Light mode only; its light color would make the dark theme's light text unreadable. */
@@ -691,6 +695,10 @@ main.home {
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  /* Rows are at least square; when they don't reach the bottom of the screen,
+     they share the leftover height equally */
+  grid-auto-rows: 1fr;
+  flex: 1;
   gap: 2px;
   background: var(--bg);
 }
@@ -698,6 +706,9 @@ main.home {
   position: relative;
   display: block;
   aspect-ratio: 1;
+  /* Grid items with an aspect-ratio don't stretch by default; stretching only the
+     height would let aspect-ratio widen the tile past its column */
+  place-self: stretch;
   overflow: hidden;
   background: var(--card);
   color: inherit;
