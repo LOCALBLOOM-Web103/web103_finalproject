@@ -1,7 +1,7 @@
 // Run: node --test server/routes/lookups.test.js
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { validateVenue } from './lookups.js'
+import { validateVenue, validateGeocodeQuery } from './lookups.js'
 
 const valid = {
   name: 'Clay & Coffee Studio',
@@ -74,4 +74,49 @@ test('zip_code is optional but must be 5 digits or ZIP+4 when sent', () => {
     assert.equal(validateVenue({ ...valid, zip_code }), null, zip_code)
   for (const zip_code of ['9411', '94110-12', 'abcde', 94110])
     assert.match(validateVenue({ ...valid, zip_code }), /^zip_code /)
+})
+
+const geo = { address: '412 Valencia St', city: 'San Francisco', state: 'CA' }
+const STATE_MSG = 'state must be a US state code like CA'
+const ZIP_MSG = 'zip_code must be 5 digits or ZIP+4 (like 94110 or 94110-1234)'
+
+test('a valid geocode query passes', () => {
+  for (const extra of [
+    {},
+    { state: 'ca' },
+    { zip_code: '' },
+    { zip_code: '94110' },
+    { zip_code: '94110-1234' },
+  ])
+    assert.equal(validateGeocodeQuery({ ...geo, ...extra }), null)
+})
+
+test('geocode names a missing or too-long address or city', () => {
+  const cases = [
+    [{ address: '' }, 'address is required'],
+    [{ address: 'x'.repeat(201) }, 'address must be 200 characters or fewer'],
+    [{ city: '  ' }, 'city is required'],
+    [{ city: 'x'.repeat(101) }, 'city must be 100 characters or fewer'],
+  ]
+  for (const [change, message] of cases)
+    assert.equal(validateGeocodeQuery({ ...geo, ...change }), message)
+})
+
+test('geocode names the state when only the state is wrong', () => {
+  assert.equal(validateGeocodeQuery({ ...geo, state: '' }), 'state is required')
+  assert.equal(
+    validateGeocodeQuery({ ...geo, state: 'ZZ', zip_code: '94110' }),
+    STATE_MSG,
+  )
+})
+
+test('geocode names the ZIP when only the ZIP is wrong', () => {
+  assert.equal(validateGeocodeQuery({ ...geo, zip_code: '9411' }), ZIP_MSG)
+})
+
+test('geocode reports the state first when state and ZIP are both wrong', () => {
+  assert.equal(
+    validateGeocodeQuery({ ...geo, state: 'ZZ', zip_code: '9411' }),
+    STATE_MSG,
+  )
 })

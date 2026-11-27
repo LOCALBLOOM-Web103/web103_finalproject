@@ -112,6 +112,26 @@ export function venueValues(body) {
   ]
 }
 
+// Returns an error message, or null when the /geocode query is valid
+export function validateGeocodeQuery(query) {
+  const text = (v) => (typeof v === 'string' ? v.trim() : '')
+  const address = text(query.address)
+  const city = text(query.city)
+  const state = text(query.state).toUpperCase()
+  const zip = text(query.zip_code)
+
+  // Same wording as validateVenue, in form order
+  if (!address) return 'address is required'
+  if (address.length > 200) return 'address must be 200 characters or fewer'
+  if (!city) return 'city is required'
+  if (city.length > 100) return 'city must be 100 characters or fewer'
+  if (!state) return 'state is required'
+  if (!isUsState(state)) return 'state must be a US state code like CA'
+  if (zip && !isZipCode(zip))
+    return 'zip_code must be 5 digits or ZIP+4 (like 94110 or 94110-1234)'
+  return null
+}
+
 const parseVenueId = (raw) => {
   const id = Number(raw)
   return Number.isSafeInteger(id) && id > 0 ? id : null
@@ -285,28 +305,15 @@ const geocodeCache = new Map()
 let lastGeocodeRequest = 0
 
 router.get('/geocode', async (req, res) => {
-  const address =
-    typeof req.query.address === 'string' ? req.query.address.trim() : ''
-  const city = typeof req.query.city === 'string' ? req.query.city.trim() : ''
+  const error = validateGeocodeQuery(req.query)
+  if (error) return res.status(400).json({ error })
 
-  if (!address || !city || address.length > 200 || city.length > 100) {
-    return res.status(400).json({
-      error: 'A valid street address and city are required.',
-    })
-  }
-
-  const state =
-    typeof req.query.state === 'string'
-      ? req.query.state.trim().toUpperCase()
-      : ''
+  const address = req.query.address.trim()
+  const city = req.query.city.trim()
+  const state = req.query.state.trim().toUpperCase()
   const zip =
     typeof req.query.zip_code === 'string' ? req.query.zip_code.trim() : ''
 
-  if (!isUsState(state) || (zip && !isZipCode(zip))) {
-    return res.status(400).json({
-      error: 'Choose a valid US state and ZIP code.',
-    })
-  }
   const key = `${address}, ${city}, ${state}, ${zip}`.toLowerCase()
   const cached = geocodeCache.get(key)
 
